@@ -552,7 +552,7 @@ class HttpRequest
 		$this->result_body_size = $this->result_length - $this->result_header_size;
 		$this->result_header = trim( substr( $this->result, 0, $this->result_header_size ) );
 		$this->result_body = trim( substr( $this->result, $this->result_header_size ) );
-		//var_dump( $this->result_header );
+		//var_dump( $this->result );
 		//exit();
 	}
 

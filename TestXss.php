@@ -13,7 +13,7 @@ class TestXss
 	const DEFAULT_PAYLOAD = '\'"><';
 	const MAX_CHILD = 50;
 	const DEFAULT_MAX_CHILD = 5;
-	const VERBOSE_LEVEL = [0,1,2];
+	const VERBOSE_LEVEL = [0,1,2,3];
 	const DEFAULT_VERBOSE = 0;
 
 	/**
@@ -829,8 +829,9 @@ class TestXss
 		$xss = false;
 		$render = '';
 		$rr = $r->getResultBody();
-		var_dump($rr);
-		exit();
+		//$rr = $r->getResult();
+		//var_dump($rr);
+		//exit();
 		$regexp = '#('.$this->payload_prefix.'(.*?)'.$this->payload_suffix.')#';
 		$m = preg_match_all( $regexp, $rr, $matches );
 		//var_dump( $m );
@@ -864,7 +865,7 @@ class TestXss
 			echo "\n";
 		}
 		
-		if( $this->verbose == 0 )
+		if( $this->verbose == 0 || ($xss && $this->verbose == 3) )
 		{
 			$str = str_pad( ' ', 8 );
 			$str .= "C=".$r->result_code;

@@ -43,6 +43,7 @@ Options:
 				0: everything
 				1: don't display result details
 				2: display only vulnerable
+				3: display only vulnerable with details
 
 Examples:
 	php testxss.php --single "http://www.example.com/test.php?a=b" --payload "xss'" --cookies " PHPSESSID=elqopltf3rl25k7jkhi6drvvr9"
