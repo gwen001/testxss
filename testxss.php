@@ -93,6 +93,11 @@ function __autoload( $c ) {
 				$i++;
 				break;
 
+			case '--test':
+				$testxss->setSpecificParam($_SERVER['argv'][$i + 1]);
+				$i++;
+				break;
+
 			case '--threads':
 				$testxss->setMaxChild($_SERVER['argv'][$i + 1]);
 				$i++;
@@ -125,6 +130,8 @@ function __autoload( $c ) {
 	if( !$testxss->getSingle() && !$testxss->getRequest() && !$testxss->getSourceFile() && !$testxss->getBurpSource() ) {
 		Utils::help('No source found!');
 	}
+	
+	echo "\n";
 	
 	$n = $testxss->loadDatas();
 	echo $n." request(s) has been loaded.\n";

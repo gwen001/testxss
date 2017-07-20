@@ -50,9 +50,13 @@ class HttpRequest
 	public $content_length = false;
 
 	public $result = '';
-	public $result_length = 0;
+	public $result_length = '';
 	public $result_code = 0;
 	public $result_type = '';
+	public $result_header = '';
+	public $result_header_size = 0;
+	public $result_body = '';
+	public $result_body_size = 0;
 
 	public function __construct() {
 		$this->cookie_file = tempnam('/tmp', 'cook_');
@@ -65,6 +69,10 @@ class HttpRequest
 		$this->result_type = '';
 	}
 
+
+	public function getResultBody() {
+		return $this->result_body;
+	}
 
 	public function getResult() {
 		return $this->result;
@@ -507,11 +515,11 @@ class HttpRequest
 		curl_setopt( $c, CURLOPT_URL, $this->getFullUrl() );
 		curl_setopt( $c, CURLOPT_HTTP_VERSION, $this->http );
 		curl_setopt( $c, CURLOPT_HEADER, true );
+		//curl_setopt( $c, CURLOPT_SSL_VERIFYPEER, false );
+		//curl_setopt( $c, CURLOPT_NOBODY, true );
 		//curl_setopt($c, CURLOPT_PROXY, '127.0.0.1:9050' );
 		//curl_setopt($c, CURLOPT_PROXYTYPE, CURLPROXY_SOCKS5 );
-		if( $this->redirect ) {
-			curl_setopt( $c, CURLOPT_FOLLOWLOCATION, true );
-		}
+		curl_setopt( $c, CURLOPT_FOLLOWLOCATION, $this->redirect );
 		if( count($this->cookies) ) {
 			curl_setopt( $c, CURLOPT_COOKIE, $this->implodeCookies() );
 		}
@@ -533,11 +541,17 @@ class HttpRequest
 		curl_setopt( $c, CURLOPT_RETURNTRANSFER, true );
 		
 		$this->result = curl_exec( $c );
-		$this->result_length = strlen( $this->result );
-		$this->result_code = curl_getinfo( $c, CURLINFO_HTTP_CODE );
-		$type = explode( ' ', curl_getinfo($c,CURLINFO_CONTENT_TYPE) );
+		$this->result_info = curl_getinfo( $c );
+		$this->result_code = $this->result_info['http_code'];
+		$type = explode( ' ', $this->result_info['content_type'] );
 		$this->result_type = trim( $type[0], ' ,;' );
-		//var_dump($this->result_code);
+		$this->result_header_size = $this->result_info['header_size'];
+		$this->result_length = strlen($this->result);
+		$this->result_body_size = $this->result_length - $this->result_header_size;
+		$this->result_header = trim( substr( $this->result, 0, $this->result_header_size ) );
+		$this->result_body = trim( substr( $this->result, $this->result_header_size ) );
+		//var_dump( $this->result_header );
+		//exit();
 	}
 
 

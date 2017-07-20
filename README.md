@@ -8,7 +8,7 @@ Usage: php testxss.php [OPTIONS]
 Options:
 	-h, --help	print this help
 
-	--burp		export from Burp Suite
+	--burp		export from Burp Suite (not implement yet)
 	--request	source file of the orignal request
 	--single	load a single url
 	--urls		file that contains a list of urls
@@ -18,6 +18,7 @@ Options:
 	--no-redir	do not follow redirection
 	--ssl		force https
 	
+	--test		name of a specific param/cookie/header to test
 	--inject	injection point, default=GPCHF
 				G: GET parameters
 				P: POST parameters
@@ -30,8 +31,7 @@ Options:
 				C: Cookies
 				H: Headers
 	--gpg		try to send GET params to POST and POST params to GET
-				
-
+	
 	--payload	set single payload or file, default='"><
 	--prefix	prefix all payloads with a string, default is random string
 	--suffix	suffix all payloads with a string, default is random string

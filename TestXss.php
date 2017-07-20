@@ -51,6 +51,13 @@ class TestXss
 	private $payload_suffix = '';
 	
 	/**
+	 * test a specific param/cookie/header
+	 *
+	 * @var string
+	 */
+	private $specific_param = null;
+	
+	/**
 	 * urlencode the payload or not
 	 *
 	 * @var boolean
@@ -354,6 +361,15 @@ class TestXss
 		return true;
 	}
 
+	
+	public function getSpecificParam() {
+		return $this->specific_param;
+	}
+	public function setSpecificParam( $v ) {
+		$this->specific_param = trim( $v );
+		return true;
+	}
+	
 
 	public function loadPayload()
 	{
@@ -575,6 +591,10 @@ class TestXss
 		
 		foreach( $t_params as $pname=>$pvalue )
 		{
+			if( $this->specific_param && $pname!=$this->specific_param ) {
+				continue;
+			}
+			
 			// perform tests on POST parameters values
 			$this->total_injection++;
 			$r = clone $reference;
@@ -652,6 +672,10 @@ class TestXss
 		
 		foreach( $t_params as $pname=>$pvalue )
 		{
+			if( $this->specific_param && $pname!=$this->specific_param ) {
+				continue;
+			}
+
 			// perform tests on POST parameters values
 			if( !$this->no_test ) { // no need to perform those tests if we we only want to display the urls
 				$this->total_injection++;
@@ -731,6 +755,10 @@ class TestXss
 		
 		foreach( $t_params as $pname=>$pvalue )
 		{
+			if( $this->specific_param && $pname!=$this->specific_param ) {
+				continue;
+			}
+			
 			// perform tests on COOKIES values
 			$this->total_injection++;
 			$r = clone $reference;
@@ -766,6 +794,10 @@ class TestXss
 		
 		foreach( $t_params as $pname=>$pvalue )
 		{
+			if( $this->specific_param && $pname!=$this->specific_param ) {
+				continue;
+			}
+			
 			// perform tests on HEADERS values
 			$this->total_injection++;
 			$r = clone $reference;
@@ -796,11 +828,12 @@ class TestXss
 	{
 		$xss = false;
 		$render = '';
-		$rr = $r->getResult();
+		$rr = $r->getResultBody();
 		//var_dump($rr);
-		
-		$regexp = '#('.$this->payload_prefix.'(.*)'.$this->payload_suffix.')#';
+		//exit();
+		$regexp = '#('.$this->payload_prefix.'(.*?)'.$this->payload_suffix.')#';
 		$m = preg_match_all( $regexp, $rr, $matches );
+		//var_dump( $m );
 		//var_dump( $matches );
 		
 		if( $m ) {
@@ -836,7 +869,7 @@ class TestXss
 		{
 			$str = str_pad( ' ', 8 );
 			$str .= "C=".$r->result_code;
-			$str .= ", L=".$r->result_length;
+			$str .= ", L=".$r->result_body_size;
 			$str .= ", ".$r->result_type.", ";
 			if( $render == '' ) {
 				$str .= 'empty';
