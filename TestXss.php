@@ -829,8 +829,8 @@ class TestXss
 		$xss = false;
 		$render = '';
 		$rr = $r->getResultBody();
-		//var_dump($rr);
-		//exit();
+		var_dump($rr);
+		exit();
 		$regexp = '#('.$this->payload_prefix.'(.*?)'.$this->payload_suffix.')#';
 		$m = preg_match_all( $regexp, $rr, $matches );
 		//var_dump( $m );
@@ -850,7 +850,6 @@ class TestXss
 			$xss = true;
 		}
 		*/
-		
 		if( $xss ) {
 			echo str_pad( ' ', 8 );
 			echo $param_type." '".$param_name."' seems to be ";
