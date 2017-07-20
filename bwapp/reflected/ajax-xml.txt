@@ -1,0 +1,9 @@
+GET /xss_ajax_1-2.php?title=ooo HTTP/1.1
+Host: bwapp.test.net
+User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:54.0) Gecko/20100101 Firefox/54.0
+Accept: */*
+Accept-Language: en-US,en;q=0.5
+Referer: http://bwapp.test.net/xss_ajax_1-1.php
+Cookie: security_level=0; PHPSESSID=9lfm64637q32i0neeu1i1epim6
+Connection: close
+

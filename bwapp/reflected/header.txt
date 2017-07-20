@@ -1,0 +1,10 @@
+GET /xss_custom_header.php HTTP/1.1
+Host: bwapp.test.net
+User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:54.0) Gecko/20100101 Firefox/54.0
+Accept: */*
+Accept-Language: en-US,en;q=0.5
+bWAPP: aaaaa
+Content-Type: application/x-www-form-urlencoded
+Cookie: security_level=0; PHPSESSID=frgel3qifgoj0t28p4n6061441
+Connection: close
+
