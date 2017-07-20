@@ -52,6 +52,7 @@ class HttpRequest
 	public $result = '';
 	public $result_length = 0;
 	public $result_code = 0;
+	public $result_type = '';
 
 	public function __construct() {
 		$this->cookie_file = tempnam('/tmp', 'cook_');
@@ -61,6 +62,7 @@ class HttpRequest
 		$this->result = '';
 		$this->result_length = 0;
 		$this->result_code = 0;
+		$this->result_type = '';
 	}
 
 
@@ -266,7 +268,8 @@ class HttpRequest
 	{
 		return $this->cookies;
 	}
-	public function getCookie( $key, $base64=false ) {
+	public function getCookie( $key, $base64=false )
+	{
 		if( !isset($this->cookies[$key]) ) {
 			return false;
 		}
@@ -276,7 +279,8 @@ class HttpRequest
 		}
 		return $v;
 	}
-	public function unsetCookie($key) {
+	public function unsetCookie($key)
+	{
 		if( isset($this->cookies[$key]) ) {
 			unset( $this->cookies[$key] );
 			return true;
@@ -284,17 +288,23 @@ class HttpRequest
 			return false;
 		}
 	}
-	public function setCookie($v, $key) {
+	public function setCookie($v, $key)
+	{
 		$this->cookies[$key] = $v;
 	}
-	public function getCookies( $base64=false ) {
+	public function getCookies( $base64=false )
+	{
 		$v = $this->implodeCookies();
 		if( $base64 ) {
 			$v = base64_encode( $v );
 		}
 		return $v;
 	}
-	public function setCookies($v) {
+	public function setCookies($v)
+	{
+		if( !is_array($v) ) {
+			$v = $this->explodeCookies( $v );
+		}
 		$this->cookies = $v;
 	}
 	public function explodeCookies( $cookies )
@@ -525,6 +535,8 @@ class HttpRequest
 		$this->result = curl_exec( $c );
 		$this->result_length = strlen( $this->result );
 		$this->result_code = curl_getinfo( $c, CURLINFO_HTTP_CODE );
+		$type = explode( ' ', curl_getinfo($c,CURLINFO_CONTENT_TYPE) );
+		$this->result_type = trim( $type[0], ' ,;' );
 		//var_dump($this->result_code);
 	}
 
@@ -591,7 +603,7 @@ class HttpRequest
 		}
 		
 		if( isset($cookies) ) {
-			$this->setCookies( $this->explodeCookies($cookies) );
+			$this->setCookies( $cookies );
 		}
 		
 		$this->setUrl( $url );
@@ -599,8 +611,6 @@ class HttpRequest
 		$this->setMethod( $method );
 		$this->setHttp( $http );
 		$this->setHeaders( $h_replay );
-		//$this->setCookies( $cookies );
-		//$this->setParams( $params );
 		
 		return true;
 	}

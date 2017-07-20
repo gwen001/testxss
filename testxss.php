@@ -24,6 +24,15 @@ function __autoload( $c ) {
 				$i++;
 				break;
 
+			case '--cookies':
+				$testxss->setCookies( $_SERVER['argv'][$i + 1] );
+				$i++;
+				break;
+
+			case '--encode':
+				$testxss->enableEncode();
+				break;
+				
 			case '--force-cl':
 				$testxss->forceContentLength();
 				break;
@@ -85,17 +94,17 @@ function __autoload( $c ) {
 				break;
 
 			case '--threads':
-				$testxss->setThreads($_SERVER['argv'][$i + 1]);
-				$i++;
-				break;
-
-			case '--tolerance':
-				$testxss->setTolerance($_SERVER['argv'][$i + 1]);
+				$testxss->setMaxChild($_SERVER['argv'][$i + 1]);
 				$i++;
 				break;
 
 			case '--urls':
 				$testxss->setSourceFile($_SERVER['argv'][$i + 1]);
+				$i++;
+				break;
+
+			case '--verbose':
+				$testxss->setVerbose($_SERVER['argv'][$i + 1]);
 				$i++;
 				break;
 

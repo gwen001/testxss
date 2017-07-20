@@ -3,41 +3,51 @@ PHP tool to test basic reflected Cross Site Scripting aka XSS
 Note that this is an automated tool, manual check is still required.  
 
 ```
-Usage: php testxss.php [OPTIONS] -f <request_file>
+Usage: php testxss.php [OPTIONS]
 
 Options:
-	--burp		export from Burp Suite
-	--encode	encode special char in payloads (not implemented yet)
-	--encode-char	specify what chars to encode (default=php -a./\=<>?+&*;:"{}|^`) (not implemented yet)
-	--force-cl	force Content-Length header
-	--gpg		try to send GET params to POST and POST params to GET
 	-h, --help	print this help
+
+	--burp		export from Burp Suite
+	--request	source file of the orignal request
+	--single	load a single url
+	--urls		file that contains a list of urls
+	
+	--cookies	set the cookie (overwrite all other cookies)
+	--force-cl	force Content-Length header
+	--no-redir	do not follow redirection
+	--ssl		force https
+	
 	--inject	injection point, default=GPCHF
 				G: GET parameters
 				P: POST parameters
 				C: Cookies
 				H: Headers
-				F: Fragment
-	--inject_name	inject in paramater name as well, default=disabled
+				F: Fragment (not implemented yet)
+	--inject-name	inject in paramater name as well, default=disabled
 				G: GET parameters
 				P: POST parameters
 				C: Cookies
 				H: Headers
+	--gpg		try to send GET params to POST and POST params to GET
+				
+
+	--payload	set single payload or file, default='"><
+	--prefix	prefix all payloads with a string, default is random string
+	--suffix	suffix all payloads with a string, default is random string
+	--encode	urlencode the payload, default=disabled
+
 	--no-test	do not performed any test, list only the urls called
-	--no-redir	do not follow redirection
-	--payload	set single payload (default='"><) or file
-	--prefix	prefix all payloads with a string
-	--request	source file of the orignal request
-	--single	load a single url
-	--ssl		force https
-	--suffix	suffix all payloads with a string
-	--threads	number of threads, default=5 (not implemented yet)s
-	--tolerance	set tolerance for result output (not implemented yet)
-	--urls		file that contains a list of urls
+	--threads	number of threads, default=5
+	--verbose	level of verbose, default=0
+				0: everything
+				1: don't display result details
+				2: display only vulnerable
 
 Examples:
-	php testxss.php -f request.txt
-	php testxss.php -r -s -i GPC -f request.txt
+	php testxss.php --single "http://www.example.com/test.php?a=b" --payload "xss'" --cookies " PHPSESSID=elqopltf3rl25k7jkhi6drvvr9"
+	php testxss.php --request export.burp --inject GPCH --gpg --inject-name GP
+	php testxss.php --urls urls.txt --threads 10 --payload paylaods.txt --prefix aaaaa --suffix bbbbb
 ```
 
 I don't believe in license.  
