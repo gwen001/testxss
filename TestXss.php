@@ -828,18 +828,19 @@ class TestXss
 	{
 		$xss = false;
 		$render = '';
-		$rr = $r->getResultBody();
-		//$rr = $r->getResult();
+		//$rr = $r->getResultBody();
+		$rr = $r->getResult();
 		//var_dump($rr);
 		//exit();
 		$regexp = '#('.$this->payload_prefix.'(.*?)'.$this->payload_suffix.')#';
 		$m = preg_match_all( $regexp, $rr, $matches );
 		//var_dump( $m );
 		//var_dump( $matches );
+		//var_dump( $this->t_payload_wanted[$pindex] );
 		
 		if( $m ) {
-			foreach( $matches as $m ) {
-				if( $m[0] == $this->t_payload_wanted[$pindex] ) {
+			foreach( $matches[1] as $m ) {
+				if( $m == $this->t_payload_wanted[$pindex] ) {
 					$xss = true;
 				}
 			}
