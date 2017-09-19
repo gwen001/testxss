@@ -47,8 +47,15 @@ class TestXss
 	private $t_payload = [];
 	private $t_payload_wanted = [];
 	private $s_payload = null;
-	private $payload_prefix = '';
-	private $payload_suffix = '';
+	private $payload_prefix = null;
+	private $payload_suffix = null;
+	
+	/**
+	 * replace the value of the parameter by the payload instead of concatenate at the end
+	 *
+	 * @var mixed
+	 */
+	private $replace_mode = null;
 	
 	/**
 	 * test a specific param/cookie/header
@@ -199,6 +206,19 @@ class TestXss
 		return true;
 	}
 
+	
+	public function getReplaceMode() {
+		return $this->replace_mode;
+	}
+	public function setReplaceMode( $v ) {
+		$v = strtoupper( trim($v) );
+		$v = preg_replace( '#[^'.self::DEFAULT_INJECTION.']#', '', $v );
+		if( $v != '' ) {
+			$this->replace_mode = $v;
+		}
+		return true;
+	}
+	
 	
 	public function getCookies() {
 		return $this->cookies;
@@ -374,10 +394,10 @@ class TestXss
 	public function loadPayload()
 	{
 		$uniqid = uniqid();
-		if( !strlen($this->payload_prefix) ) {
+		if( is_null($this->payload_prefix) ) {
 			$this->payload_prefix = substr( $uniqid, 0, 6 );
 		}
-		if( !strlen($this->payload_suffix) ) {
+		if( is_null($this->payload_suffix) ) {
 			$this->payload_suffix = substr( $uniqid, -6 );
 		}
 		
@@ -598,7 +618,12 @@ class TestXss
 			// perform tests on POST parameters values
 			$this->total_injection++;
 			$r = clone $reference;
-			$r->setGetParam( $pvalue.$payload, $pname );
+			if( strstr($this->replace_mode,'G') ) {
+				$r->setGetParam( $payload, $pname );
+			} else {
+				$r->setGetParam( $pvalue.$payload, $pname );
+			}
+			//$r->setGetParam( $payload, $pname );
 			if( $this->no_test ) {
 				echo $r->getFullUrl()."\n";
 			} else {
@@ -611,7 +636,11 @@ class TestXss
 			if( $this->gpg && !$this->no_test ) {
 				$this->total_injection++;
 				$r = clone $reference;
-				$r->setGetParam( $pvalue.$payload, $pname );
+				if( strstr($this->replace_mode,'G') ) {
+					$r->setGetParam( $payload, $pname );
+				} else {
+					$r->setGetParam( $pvalue.$payload, $pname );
+				}
 				$r->setPostParams( array_merge($r->getGetTable(),$r->getPostTable()) );
 				$r->setGetParams( '' );
 				if( $r->getMethod() == HttpRequest::METHOD_GET ) {
@@ -680,7 +709,11 @@ class TestXss
 			if( !$this->no_test ) { // no need to perform those tests if we we only want to display the urls
 				$this->total_injection++;
 				$r = clone $reference;
-				$r->setPostParam( $pvalue.$payload, $pname );
+				if( strstr($this->replace_mode,'P') ) {
+					$r->setPostParam( $payload, $pname );
+				} else {
+					$r->setPostParam( $pvalue.$payload, $pname );
+				}
 				$r->request();
 				$xss += $this->result( $r, $pindex, $pname, $pvalue, 'POST parameter' );
 				unset( $r );
@@ -690,7 +723,11 @@ class TestXss
 			if( $this->gpg ) {
 				$this->total_injection++;
 				$r = clone $reference;
-				$r->setPostParam( $pvalue.$payload, $pname );
+				if( strstr($this->replace_mode,'P') ) {
+					$r->setPostParam( $payload, $pname );
+				} else {
+					$r->setPostParam( $pvalue.$payload, $pname );
+				}
 				$r->setGetParams( array_merge($r->getPostTable(),$r->getGetTable()) );
 				$r->setPostParams( '' );
 				if( $r->getMethod() == HttpRequest::METHOD_POST ) {
@@ -762,7 +799,11 @@ class TestXss
 			// perform tests on COOKIES values
 			$this->total_injection++;
 			$r = clone $reference;
-			$r->setCookie( $pvalue.$payload, $pname );
+			if( strstr($this->replace_mode,'C') ) {
+				$r->setCookie( $payload, $pname );
+			} else {
+				$r->setCookie( $pvalue.$payload, $pname );
+			}
 			$r->request();
 			$xss += $this->result( $r, $pindex, $pname, $pvalue, 'Cookie' );
 			unset( $r );
@@ -801,7 +842,11 @@ class TestXss
 			// perform tests on HEADERS values
 			$this->total_injection++;
 			$r = clone $reference;
-			$r->setHeader( $pvalue.$payload, $pname );
+			if( strstr($this->replace_mode,'H') ) {
+				$r->setHeader( $payload, $pname );
+			} else {
+				$r->setHeader( $pvalue.$payload, $pname );
+			}
 			$r->request();
 			$xss += $this->result( $r, $pindex, $pname, $pvalue, 'Header' );
 			unset( $r );
@@ -828,8 +873,8 @@ class TestXss
 	{
 		$xss = false;
 		$render = '';
-		//$rr = $r->getResultBody();
-		$rr = $r->getResult();
+		$rr = $r->getResultBody();
+		//$rr = $r->getResult();
 		//var_dump($rr);
 		//exit();
 		$regexp = '#('.$this->payload_prefix.'(.*?)'.$this->payload_suffix.')#';

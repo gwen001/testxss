@@ -14,108 +14,125 @@ function __autoload( $c ) {
 
 // parse command line
 {
+	$options = [
+		'burp:',
+		'cookies:',
+		'encode:',
+		'force-cl:',
+		'gpg:',
+		'h',
+		'help',
+		'inject',
+		'inject-name:',
+		'no-test',
+		'no-redir',
+		'payload:',
+		'prefix::',
+		'replace:',
+		'request:',
+		'single:',
+		'ssl',
+		'suffix::',
+		'ssl',
+		'test:',
+		'threads:',
+		'urls:',
+		'verbose:',
+	];
+	$t_options = getopt( '', $options );
+	//var_dump( $t_options );
+
 	$testxss = new TestXss();
 
-	$argc = $_SERVER['argc'] - 1;
-
-	for ($i = 1; $i <= $argc; $i++) {
-		switch ($_SERVER['argv'][$i]) {
-			case '--burp':
-				$testxss->setBurpFile( $_SERVER['argv'][$i + 1] );
-				$i++;
+	foreach( $t_options as $k=>$v ) {
+		switch( $k ) {
+			case 'burp':
+				$testxss->setBurpFile( $v );
 				break;
 
-			case '--cookies':
-				$testxss->setCookies( $_SERVER['argv'][$i + 1] );
-				$i++;
+			case 'cookies':
+				$testxss->setCookies( $v );
 				break;
 
-			case '--encode':
+			case 'encode':
 				$testxss->enableEncode();
 				break;
 				
-			case '--force-cl':
+			case 'force-cl':
 				$testxss->forceContentLength();
 				break;
 				
-			case '--gpg':
+			case 'gpg':
 				$testxss->enableGpg();
 				break;
 
 			case '-h':
-			case '--help':
+			case 'help':
 				Utils::help();
 				break;
 
-			case '--inject':
-				$testxss->setInjection( $_SERVER['argv'][$i + 1] );
-				$i++;
+			case 'inject':
+				$testxss->setInjection( $v );
 				break;
 
-			case '--inject-name':
-				$testxss->setNameInjection( $_SERVER['argv'][$i + 1] );
-				$i++;
+			case 'inject-name':
+				$testxss->setNameInjection($v );
 				break;
 
-			case '--no-test':
+			case 'no-test':
 				$testxss->noTest();
 				break;
 
-			case '--no-redir':
+			case 'no-redir':
 				$testxss->noRedirect();
 				break;
 
-			case '--payload':
-				$testxss->setPayload( $_SERVER['argv'][$i + 1] );
-				$i++;
+			case 'payload':
+				$testxss->setPayload( $v );
 				break;
 
-			case '--prefix':
-				$testxss->setPrefix( $_SERVER['argv'][$i + 1] );
-				$i++;
+			case 'prefix':
+				$testxss->setPrefix( $v );
 				break;
 
-			case '--request':
-				$testxss->setRequest( $_SERVER['argv'][$i + 1] );
-				$i++;
+			case 'replace':
+				$testxss->setReplaceMode( $v );
 				break;
 
-			case '--single':
-				$testxss->setSingle($_SERVER['argv'][$i + 1]);
-				$i++;
+			case 'request':
+				$testxss->setRequest( $v );
 				break;
 
-			case '--ssl':
+			case 'single':
+				$testxss->setSingle( $v );
+				break;
+
+			case 'ssl':
 				$testxss->forceSsl( true );
 				break;
 
-			case '--suffix':
-				$testxss->setSuffix( $_SERVER['argv'][$i + 1] );
-				$i++;
+			case 'suffix':
+				$testxss->setSuffix( $v );
 				break;
 
-			case '--test':
-				$testxss->setSpecificParam($_SERVER['argv'][$i + 1]);
-				$i++;
+			case 'test':
+				$testxss->setSpecificParam( $v );
 				break;
 
-			case '--threads':
-				$testxss->setMaxChild($_SERVER['argv'][$i + 1]);
-				$i++;
+			case 'threads':
+				$testxss->setMaxChild( $v );
 				break;
 
-			case '--urls':
-				$testxss->setSourceFile($_SERVER['argv'][$i + 1]);
-				$i++;
+			case 'urls':
+				$testxss->setSourceFile( $v );
 				break;
 
-			case '--verbose':
-				$testxss->setVerbose($_SERVER['argv'][$i + 1]);
-				$i++;
+			case 'verbose':
+				$testxss->setVerbose( $v );
 				break;
 
 			default:
-				Utils::help('Unknown option: '.$_SERVER['argv'][$i]);
+				Utils::help( 'Unknown option: '.$k );
 		}
 	}
 

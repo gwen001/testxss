@@ -15,7 +15,7 @@ class HttpRequest
 	const METHOD_HEAD = 'HEAD';
 	const METHOD_OPTIONS = 'OPTIONS';
 
-	const DEFAULT_TIMEOUT = 10;
+	const DEFAULT_TIMEOUT = 5;
 	const DEFAULT_METHOD = self::METHOD_GET;
 	const DEFAULT_HTTP = 'HTTP/1.1';
 
@@ -503,7 +503,7 @@ class HttpRequest
 	{
 		$surplace = array();
 		/*
-		var_dump($this->getFullUrl());
+		echo Utils::_println( $this->getFullUrl(), 'dark_grey' );
 		var_dump($this->method);
 		var_dump($this->http);
 		var_dump($this->cookies);
@@ -520,7 +520,7 @@ class HttpRequest
 		//curl_setopt( $c, CURLOPT_NOBODY, true );
 		//curl_setopt($c, CURLOPT_PROXY, '127.0.0.1:9050' );
 		//curl_setopt($c, CURLOPT_PROXYTYPE, CURLPROXY_SOCKS5 );
-		curl_setopt( $c, CURLOPT_CONNECTTIMEOUT, self::DEFAULT_TIMEOUT );
+		curl_setopt( $c, CURLOPT_TIMEOUT, self::DEFAULT_TIMEOUT );
 		curl_setopt( $c, CURLOPT_FOLLOWLOCATION, $this->redirect );
 		if( count($this->cookies) ) {
 			curl_setopt( $c, CURLOPT_COOKIE, $this->implodeCookies() );

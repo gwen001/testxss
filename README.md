@@ -36,6 +36,7 @@ Options:
 	--prefix	prefix all payloads with a string, default is random string
 	--suffix	suffix all payloads with a string, default is random string
 	--encode	urlencode the payload, default=disabled
+	--replace	replace the value of the parameter by the payload instead of concatenate at the end (only for GP)
 
 	--no-test	do not performed any test, list only the urls called
 	--threads	number of threads, default=5
@@ -46,9 +47,9 @@ Options:
 				3: display only vulnerable with details
 
 Examples:
-	php testxss.php --single "http://www.example.com/test.php?a=b" --payload "xss'" --cookies " PHPSESSID=elqopltf3rl25k7jkhi6drvvr9"
-	php testxss.php --request export.burp --inject GPCH --gpg --inject-name GP
-	php testxss.php --urls urls.txt --threads 10 --payload paylaods.txt --prefix aaaaa --suffix bbbbb
+	php testxss.php --single="http://www.example.com/test.php?a=b" --payload="xss'" --cookies="PHPSESSID=elqopltf3rl25k7jkhi6drvvr9"
+	php testxss.php --request=export.burp --inject=GPCH --gpg --inject-name=GP
+	php testxss.php --urls=urls.txt --threads=10 --payload=payloads.txt --prefix=aaaaa --suffix=bbbbb
 ```
 
 I don't believe in license.  
