@@ -525,8 +525,8 @@ class HttpRequest
 		if( count($this->cookies) ) {
 			curl_setopt( $c, CURLOPT_COOKIE, $this->implodeCookies() );
 		}
-		//curl_setopt( $c, CURLOPT_COOKIEJAR, $this->cookie_file );
-		//curl_setopt( $c, CURLOPT_COOKIEFILE, $this->cookie_file );
+		curl_setopt( $c, CURLOPT_COOKIEJAR, $this->cookie_file );
+		curl_setopt( $c, CURLOPT_COOKIEFILE, $this->cookie_file );
 		if( count($this->post_params) ) {
 			if( $this->content_length ) {
 				// this header seems to fuck the request...

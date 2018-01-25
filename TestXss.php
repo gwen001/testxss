@@ -131,6 +131,12 @@ class TestXss
 	private $cookies = null;
 	
 	/**
+	 * enable phantomjs
+	 * 
+	 */
+	private $phantom = null;
+	
+	/**
 	 * follow redirection or not
 	 *
 	 * @var boolean
@@ -143,6 +149,13 @@ class TestXss
 	 * @var integer
 	 */
 	private $verbose = self::DEFAULT_VERBOSE;
+	
+	/**
+	 * stop on success level
+	 *
+	 * @var boolean
+	 */
+	private $stop_on_success = false;
 	
 	/**
 	 * results
@@ -189,6 +202,11 @@ class TestXss
 	}
 
 	
+	public function stopOnSuccess() {
+		$this->stop_on_success = true;
+	}
+
+	
 	public function getEncode() {
 		return $this->encode;
 	}
@@ -213,7 +231,8 @@ class TestXss
 	public function setReplaceMode( $v ) {
 		$v = strtoupper( trim($v) );
 		$v = preg_replace( '#[^'.self::DEFAULT_INJECTION.']#', '', $v );
-		if( $v != '' ) {
+		//if( $v != '' )
+		{
 			$this->replace_mode = $v;
 		}
 		return true;
@@ -226,6 +245,11 @@ class TestXss
 	public function setCookies( $v ) {
 		$this->cookies = trim( $v );
 		return true;
+	}
+
+	
+	public function enablePhantom( $v ) {
+		$this->phantom = trim( $v );
 	}
 
 
@@ -411,7 +435,7 @@ class TestXss
 		} else {
 			$this->t_payload = [self::DEFAULT_PAYLOAD];
 		}
-		
+
 		//if( strlen($this->payload_prefix) || strlen($this->payload_suffix) || $this->encode ) {
 			foreach( $this->t_payload as &$p ) {
 				if( $this->encode ) {
@@ -557,22 +581,34 @@ class TestXss
 			if( strstr($this->injection,'G') ) {
 				$xss += $this->testGet( $reference, $pindex );
 			}
+			if( $xss && $this->stop_on_success ) {
+				break;
+			}
 
 			// perform tests on POST parameters
 			if( strstr($this->injection,'P') ) {
 				$xss += $this->testPost( $reference, $pindex );
+			}
+			if( $xss && $this->stop_on_success ) {
+				break;
 			}
 			
 			// perform tests on COOKIES
 			if( strstr($this->injection,'C') && !$this->no_test ) {
 				$xss += $this->testCookies( $reference, $pindex );
 			}
-			
+			if( $xss && $this->stop_on_success ) {
+				break;
+			}
+						
 			// perform tests on HEADERS
 			if( strstr($this->injection,'H') && !$this->no_test ) {
 				$xss += $this->testHeaders( $reference, $pindex );
 			}
-			
+			if( $xss && $this->stop_on_success ) {
+				break;
+			}
+						
 			$display = ob_get_contents();
 			ob_end_clean();
 			
@@ -619,38 +655,47 @@ class TestXss
 			$this->total_injection++;
 			$r = clone $reference;
 			if( strstr($this->replace_mode,'G') ) {
-				$r->setGetParam( $payload, $pname );
+				$new_pvalue = $payload;
 			} else {
-				$r->setGetParam( $pvalue.$payload, $pname );
+				$new_pvalue = $pvalue.$payload;
 			}
-			//$r->setGetParam( $payload, $pname );
+			$r->setGetParam( $new_pvalue, $pname );
 			if( $this->no_test ) {
 				echo $r->getFullUrl()."\n";
 			} else {
-				$r->request();
-				$xss += $this->result( $r, $pindex, $pname, $pvalue, 'GET parameter' );
+				$this->request( $r );
+				$xss += $this->result( $r, $pindex, $pname, $new_pvalue, 'GET parameter' );
 			}
 			unset( $r );
 
+			if( $xss && $this->stop_on_success ) {
+				return $xss;
+			}
+			
 			// transform GET parameters to POST
 			if( $this->gpg && !$this->no_test ) {
 				$this->total_injection++;
 				$r = clone $reference;
 				if( strstr($this->replace_mode,'G') ) {
-					$r->setGetParam( $payload, $pname );
+					$new_pvalue = $payload;
 				} else {
-					$r->setGetParam( $pvalue.$payload, $pname );
+					$new_pvalue = $pvalue.$payload;
 				}
+				$r->setGetParam( $new_pvalue, $pname );
 				$r->setPostParams( array_merge($r->getGetTable(),$r->getPostTable()) );
 				$r->setGetParams( '' );
 				if( $r->getMethod() == HttpRequest::METHOD_GET ) {
 					$r->setMethod( HttpRequest::METHOD_POST );
 				}
-				$r->request();
+				$this->request( $r );
 				//$r->export();
 				//exit();
-				$xss += $this->result( $r, $pindex, $pname, $pvalue, 'GET->POST parameter' );
+				$xss += $this->result( $r, $pindex, $pname, $new_pvalue, 'GET->POST parameter' );
 				unset( $r );
+				
+				if( $xss && $this->stop_on_success ) {
+					return $xss;
+				}
 			}
 			
 			// perform tests on GET parameters names
@@ -664,10 +709,14 @@ class TestXss
 				if( $this->no_test ) {
 					echo $r->getFullUrl()."\n";
 				} else {
-					$r->request();
+					$this->request( $r );
 					$xss += $this->result( $r, $pindex, $pname, $pvalue, 'GET parameter (name)' );
 				}
 				unset( $r );
+
+				if( $xss && $this->stop_on_success ) {
+					return $xss;
+				}
 				
 				// transform GET parameters to POST
 				if( $this->gpg && !$this->no_test ) {
@@ -681,9 +730,13 @@ class TestXss
 					if( $r->getMethod() == HttpRequest::METHOD_GET ) {
 						$r->setMethod( HttpRequest::METHOD_POST );
 					}
-					$r->request();
+					$this->request( $r );
 					$xss += $this->result( $r, $pindex, $pname, $pvalue, 'GET->POST parameter (name)' );
 					unset( $r );
+				}
+				
+				if( $xss && $this->stop_on_success ) {
+					return $xss;
 				}
 			}
 		}
@@ -710,13 +763,18 @@ class TestXss
 				$this->total_injection++;
 				$r = clone $reference;
 				if( strstr($this->replace_mode,'P') ) {
-					$r->setPostParam( $payload, $pname );
+					$new_pvalue = $payload;
 				} else {
-					$r->setPostParam( $pvalue.$payload, $pname );
+					$new_pvalue = $pvalue.$payload;
 				}
-				$r->request();
-				$xss += $this->result( $r, $pindex, $pname, $pvalue, 'POST parameter' );
+				$r->setPostParam( $new_pvalue, $pname );
+				$this->request( $r );
+				$xss += $this->result( $r, $pindex, $pname, $new_pvalue, 'POST parameter' );
 				unset( $r );
+				
+				if( $xss && $this->stop_on_success ) {
+					return $xss;
+				}
 			}
 
 			// transform POST parameters to GET
@@ -724,10 +782,11 @@ class TestXss
 				$this->total_injection++;
 				$r = clone $reference;
 				if( strstr($this->replace_mode,'P') ) {
-					$r->setPostParam( $payload, $pname );
+					$new_pvalue = $payload;
 				} else {
-					$r->setPostParam( $pvalue.$payload, $pname );
+					$new_pvalue = $pvalue.$payload;
 				}
+				$r->setPostParam( $new_pvalue, $pname );
 				$r->setGetParams( array_merge($r->getPostTable(),$r->getGetTable()) );
 				$r->setPostParams( '' );
 				if( $r->getMethod() == HttpRequest::METHOD_POST ) {
@@ -736,10 +795,14 @@ class TestXss
 				if( $this->no_test ) {
 					echo $r->getFullUrl()."\n";
 				} else {
-					$r->request();
-					$xss += $this->result( $r, $pindex, $pname, $pvalue, 'POST->GET parameter' );
+					$this->request( $r );
+					$xss += $this->result( $r, $pindex, $pname, $new_pvalue, 'POST->GET parameter' );
 				}
 				unset( $r );
+				
+				if( $xss && $this->stop_on_success ) {
+					return $xss;
+				}
 			}
 			
 			// perform tests on POST parameters names
@@ -751,9 +814,13 @@ class TestXss
 					$v = $r->getPostParam( $pname );
 					$r->unsetPostParam( $pname );
 					$r->setPostParam( $pvalue, $pname.$payload );
-					$r->request();
+					$this->request( $r );
 					$xss += $this->result( $r, $pindex, $pname, $pvalue, 'POST parameter (name)' );
 					unset( $r );
+
+					if( $xss && $this->stop_on_success ) {
+						return $xss;
+					}
 				}
 				
 				// transform POST parameters to GET
@@ -771,10 +838,14 @@ class TestXss
 					if( $this->no_test ) {
 						echo $r->getFullUrl()."\n";
 					} else {
-						$r->request();
+						$this->request( $r );
 					}
 					$xss += $this->result( $r, $pindex, $pname, $pvalue, 'POST->GET parameter (name)' );
 					unset( $r );
+					
+					if( $xss && $this->stop_on_success ) {
+						return $xss;
+					}
 				}
 			}
 		}
@@ -800,13 +871,18 @@ class TestXss
 			$this->total_injection++;
 			$r = clone $reference;
 			if( strstr($this->replace_mode,'C') ) {
-				$r->setCookie( $payload, $pname );
+				$new_pvalue = $payload;
 			} else {
-				$r->setCookie( $pvalue.$payload, $pname );
+				$new_pvalue = $pvalue.$payload;
 			}
-			$r->request();
-			$xss += $this->result( $r, $pindex, $pname, $pvalue, 'Cookie' );
+			$r->setCookie( $new_pvalue, $pname );
+			$this->request( $r );
+			$xss += $this->result( $r, $pindex, $pname, $new_pvalue, 'Cookie' );
 			unset( $r );
+
+			if( $xss && $this->stop_on_success ) {
+				return $xss;
+			}
 			
 			// perform tests on COOKIES names
 			if( strstr($this->name_injection,'C') )
@@ -816,9 +892,13 @@ class TestXss
 				$v = $r->getCookie( $pname );
 				$r->unsetCookie( $pname );
 				$r->setCookie( $pvalue, $pname.$payload );
-				$r->request();
+				$this->request( $r );
 				$xss += $this->result( $r, $pindex, $pname, $pvalue, 'Cookie (name)' );
 				unset( $r );
+				
+				if( $xss && $this->stop_on_success ) {
+					return $xss;
+				}
 			}
 		}
 		
@@ -844,13 +924,19 @@ class TestXss
 			$r = clone $reference;
 			if( strstr($this->replace_mode,'H') ) {
 				$r->setHeader( $payload, $pname );
+				$new_pvalue = $payload;
 			} else {
-				$r->setHeader( $pvalue.$payload, $pname );
+				$new_pvalue = $pvalue.$payload;
 			}
-			$r->request();
-			$xss += $this->result( $r, $pindex, $pname, $pvalue, 'Header' );
+			$r->setHeader( $new_pvalue, $pname );
+			$this->request( $r );
+			$xss += $this->result( $r, $pindex, $pname, $new_pvalue, 'Header' );
 			unset( $r );
-			
+
+			if( $xss && $this->stop_on_success ) {
+				return $xss;
+			}
+
 			// perform tests on HEADERS names
 			if( strstr($this->name_injection,'H') )
 			{
@@ -859,9 +945,13 @@ class TestXss
 				$v = $r->getHeader( $pname );
 				$r->unsetHeader( $pname );
 				$r->setHeader( $pvalue, $pname.$payload );
-				$r->request();
+				$this->request( $r );
 				$xss += $this->result( $r, $pindex, $pname, $pvalue, 'Header (name)' );
 				unset( $r );
+
+				if( $xss && $this->stop_on_success ) {
+					return $xss;
+				}
 			}
 		}
 		
@@ -869,8 +959,80 @@ class TestXss
 	}
 	
 	
+	private function request( $r )
+	{
+		//var_dump( $r->getCookieTable() );
+		
+		if( !$this->phantom ) {
+			$r->request();
+			return;
+		}
+		
+		//var_dump(str_replace('"','\\"',$r->getFullUrl()));
+		//exit();
+		$c = $this->phantom.' '.dirname(__FILE__).'/phantom-xss.js "'.str_replace('"','\\"',$r->getFullUrl()).'"';
+		//var_dump( $c );
+		
+		ob_start();
+		//$this->phantom_output = Utils::_exec( $c, false );
+		system( $c );
+		$this->phantom_output = ob_get_contents();
+		ob_end_clean();
+		
+		//var_dump( $this->phantom_output );
+	}
+	
+	
+	private function result_phantom( $r, $pindex, $param_name, $param_value, $param_type )
+	{
+		$xss = 0;
+		$m = preg_match( '/\(\) called/', $this->phantom_output );
+		
+		if( $m ) {
+			$xss = true;
+		}
+		
+		if( $xss ) {
+			echo str_pad( ' ', 8 );
+			echo $param_type." '".$param_name."' seems to be ";
+			Utils::_print( 'VULNERABLE', 'red' );
+			echo ' with value: ';
+			Utils::_print( $param_value, 'light_cyan' );
+			//Utils::_print( $param_value.$this->t_payload[$pindex], 'light_cyan' );
+			echo "\n";
+		} elseif( $this->verbose < 2 ) {
+			echo str_pad( ' ', 8 );
+			echo $param_type." '".$param_name."' seems to be ";
+			Utils::_print( 'SAFE', 'green' );
+			echo "\n";
+		}
+		/*
+		if( $this->verbose == 0 || ($xss && $this->verbose == 3) )
+		{
+			$str = str_pad( ' ', 8 );
+			$str .= "C=".$r->result_code;
+			$str .= ", L=".$r->result_body_size;
+			$str .= ", ".$r->result_type.", ";
+			if( $render == '' ) {
+				$str .= 'empty';
+			} else {
+				$str .= $render;
+			}
+			$str .= "\n";
+			
+			Utils::_print( $str, 'light_grey' );
+		}
+		*/
+		return (int)$xss;
+	}
+	
+	
 	private function result( $r, $pindex, $param_name, $param_value, $param_type )
 	{
+		if( $this->phantom ) {
+			return $this->result_phantom( $r, $pindex, $param_name, $param_value, $param_type );
+		}
+		
 		$xss = false;
 		$render = '';
 		$rr = $r->getResultBody();
@@ -902,7 +1064,8 @@ class TestXss
 			echo $param_type." '".$param_name."' seems to be ";
 			Utils::_print( 'VULNERABLE', 'red' );
 			echo ' with value: ';
-			Utils::_print( $param_value.$this->t_payload[$pindex], 'light_cyan' );
+			Utils::_print( $param_value, 'light_cyan' );
+			//Utils::_print( $param_value.$this->t_payload[$pindex], 'light_cyan' );
 			echo "\n";
 		} elseif( $this->verbose < 2 ) {
 			echo str_pad( ' ', 8 );
@@ -919,7 +1082,7 @@ class TestXss
 			$str .= ", ".$r->result_type.", ";
 			if( $render == '' ) {
 				$str .= 'empty';
-			} else {
+			} elseif( $this->payload_prefix!='' && $this->payload_suffix!='' ) {
 				$str .= $render;
 			}
 			$str .= "\n";
@@ -935,6 +1098,8 @@ class TestXss
 	// Thousand Thanks!
 	public function signal_handler( $signal, $pid=null, $status=null )
 	{
+		$pid = (int)$pid;
+		
 		// If no pid is provided, Let's wait to figure out which child process ended
 		if( !$pid ){
 			$pid = pcntl_waitpid( -1, $status, WNOHANG );

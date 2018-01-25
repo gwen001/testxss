@@ -19,7 +19,7 @@ function __autoload( $c ) {
 		'cookies:',
 		'encode:',
 		'force-cl:',
-		'gpg:',
+		'gpg',
 		'h',
 		'help',
 		'inject',
@@ -27,13 +27,14 @@ function __autoload( $c ) {
 		'no-test',
 		'no-redir',
 		'payload:',
+		'phantom:',
 		'prefix::',
 		'replace:',
 		'request:',
 		'single:',
+		'sos',
 		'ssl',
 		'suffix::',
-		'ssl',
 		'test:',
 		'threads:',
 		'urls:',
@@ -91,6 +92,10 @@ function __autoload( $c ) {
 				$testxss->setPayload( $v );
 				break;
 
+			case 'phantom':
+				$testxss->enablePhantom( $v );
+				break;
+
 			case 'prefix':
 				$testxss->setPrefix( $v );
 				break;
@@ -105,6 +110,10 @@ function __autoload( $c ) {
 
 			case 'single':
 				$testxss->setSingle( $v );
+				break;
+
+			case 'sos':
+				$testxss->stopOnSuccess();
 				break;
 
 			case 'ssl':

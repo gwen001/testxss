@@ -39,6 +39,8 @@ Options:
 	--replace	replace the value of the parameter by the payload instead of concatenate at the end (only for GP)
 
 	--no-test	do not performed any test, list only the urls called
+	--phantom	if you test XSS with phantomjs, full path to the executable
+	--sos		stop on success
 	--threads	number of threads, default=5
 	--verbose	level of verbose, default=0
 				0: everything

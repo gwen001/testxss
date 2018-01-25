@@ -146,7 +146,7 @@ class Utils
 	}
 	
 
-	public static function _exec( $cmd )
+	public static function _exec( $cmd, $display_output=true )
 	{
 		$output = '';
 	
@@ -155,7 +155,9 @@ class Utils
 		$proc = popen( $cmd, 'r' );
 		while( !feof($proc) ) {
 			$line = fread( $proc, 4096 );
-			echo $line;
+			if( $display_output ) {
+				echo $line;
+			}
 			$output .= $line;
 			@flush();
 		}
