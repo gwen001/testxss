@@ -1,13 +1,14 @@
-# testxss
-PHP tool to test basic reflected Cross Site Scripting aka XSS
+# testonion
+PHP tool to find onion websites.
 Note that this is an automated tool, manual check is still required.  
 
 ```
-Usage: php testxss.php [OPTIONS]
+Usage: php testonion.php [OPTIONS]
 
 Options:
 	-h, --help	print this help
 
+<<<<<<< HEAD
 	--burp		export from Burp Suite (not implement yet)
 	--request	source file of the orignal request
 	--single	load a single url
@@ -41,17 +42,16 @@ Options:
 	--no-test	do not performed any test, list only the urls called
 	--phantom	if you test XSS with phantomjs, full path to the executable
 	--sos		stop on success
+=======
+	--n		how many domain you want to generate
+	--output	output directory, default=./output/
+	--port	set the port, default=80 (not supported yet)
+>>>>>>> 8e517694e99ca76dfb52752c0d8bab19c1df532e
 	--threads	number of threads, default=5
-	--verbose	level of verbose, default=0
-				0: everything
-				1: don't display result details
-				2: display only vulnerable
-				3: display only vulnerable with details
+	--tld	tld, default=onion
 
 Examples:
-	php testxss.php --single="http://www.example.com/test.php?a=b" --payload="xss'" --cookies="PHPSESSID=elqopltf3rl25k7jkhi6drvvr9"
-	php testxss.php --request=export.burp --inject=GPCH --gpg --inject-name=GP
-	php testxss.php --urls=urls.txt --threads=10 --payload=payloads.txt --prefix=aaaaa --suffix=bbbbb
+	php testonion.php --n 10 --output /tmp/ --threads 10
 ```
 
 I don't believe in license.  

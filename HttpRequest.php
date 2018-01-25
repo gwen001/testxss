@@ -15,7 +15,7 @@ class HttpRequest
 	const METHOD_HEAD = 'HEAD';
 	const METHOD_OPTIONS = 'OPTIONS';
 
-	const DEFAULT_TIMEOUT = 5;
+	const DEFAULT_TIMEOUT = 7;
 	const DEFAULT_METHOD = self::METHOD_GET;
 	const DEFAULT_HTTP = 'HTTP/1.1';
 
@@ -512,6 +512,15 @@ class HttpRequest
 		var_dump($this->getSpecialHeaders());
 		*/
 		$c = curl_init();
+
+		curl_setopt( $c, CURLOPT_PROXYTYPE, CURLPROXY_SOCKS5 );
+		//curl_setopt( $c, CURLOPT_PROXYTYPE, CURLPROXY_HTTP );
+		curl_setopt( $c, CURLOPT_PROXY, '127.0.0.1' );
+		curl_setopt( $c, CURLOPT_PROXYPORT, 9050 );
+		curl_setopt( $c, CURLOPT_HTTPPROXYTUNNEL, true );
+		
+		
+		
 		curl_setopt( $c, CURLOPT_CUSTOMREQUEST, $this->method );
 		curl_setopt( $c, CURLOPT_URL, $this->getFullUrl() );
 		curl_setopt( $c, CURLOPT_HTTP_VERSION, $this->http );
