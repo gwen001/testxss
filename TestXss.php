@@ -8,7 +8,7 @@
 
 class TestXss
 {
-	const DEFAULT_INJECTION = 'GPCH';
+	const DEFAULT_INJECTION = 'GPCHF';
 	const DEFAULT_NAME_INJECTION = 'GPCH';
 	const DEFAULT_PAYLOAD = '\'"><';
 	const MAX_CHILD = 50;
@@ -568,7 +568,7 @@ class TestXss
 		
 		if( !$this->no_test ) {
 			echo "Request ".($rindex+1)."/".$this->n_request." -> ";
-			Utils::_print( $reference->getUrl(), 'light_purple' );
+			Utils::_print( $reference->getFullUrl(), 'light_purple' );
 			echo "\n";
 		}
 		
@@ -576,6 +576,14 @@ class TestXss
 		{
 			$xss = 0;
 			ob_start();
+
+			// perform tests on FRAGMENT
+			if( strstr($this->injection,'F') && !$this->no_test ) {
+				$xss += $this->testFragment( $reference, $pindex );
+			}
+			if( $xss && $this->stop_on_success ) {
+				break;
+			}
 
 			// perform tests on GET parameters
 			if( strstr($this->injection,'G') ) {
@@ -600,7 +608,7 @@ class TestXss
 			if( $xss && $this->stop_on_success ) {
 				break;
 			}
-						
+			
 			// perform tests on HEADERS
 			if( strstr($this->injection,'H') && !$this->no_test ) {
 				$xss += $this->testHeaders( $reference, $pindex );
@@ -608,7 +616,7 @@ class TestXss
 			if( $xss && $this->stop_on_success ) {
 				break;
 			}
-						
+			
 			$display = ob_get_contents();
 			ob_end_clean();
 			
@@ -638,6 +646,37 @@ class TestXss
 	}
 	
 	
+	private function testFragment( $reference, $pindex )
+	{
+		// perform tests on FRAGMENT value
+		$xss = 0;
+		$payload = $this->t_payload[$pindex];
+		$pvalue = $reference->getFragment();
+		
+		$this->total_injection++;
+		
+		$r = clone $reference;
+		if( strstr($this->replace_mode,'F') ) {
+			$new_pvalue = $payload;
+		} else {
+			$new_pvalue = $pvalue.$payload;
+		}
+		
+		$r->setFragment( $new_pvalue );
+		
+		if( $this->no_test ) {
+			echo $r->getFullUrl()."\n";
+		} else {
+			$this->request( $r );
+			$xss += $this->result( $r, 0, '#', $new_pvalue, 'FRAGMENT' );
+		}
+		
+		unset( $r );
+
+		return $xss;
+	}
+	
+	
 	private function testGet( $reference, $pindex )
 	{
 		$xss = 0;
@@ -651,7 +690,7 @@ class TestXss
 				continue;
 			}
 			
-			// perform tests on POST parameters values
+			// perform tests on GET parameters values
 			$this->total_injection++;
 			$r = clone $reference;
 			if( strstr($this->replace_mode,'G') ) {
@@ -688,8 +727,6 @@ class TestXss
 					$r->setMethod( HttpRequest::METHOD_POST );
 				}
 				$this->request( $r );
-				//$r->export();
-				//exit();
 				$xss += $this->result( $r, $pindex, $pname, $new_pvalue, 'GET->POST parameter' );
 				unset( $r );
 				
@@ -961,16 +998,17 @@ class TestXss
 	
 	private function request( $r )
 	{
-		//var_dump( $r->getCookieTable() );
-		
 		if( !$this->phantom ) {
 			$r->request();
 			return;
 		}
 		
-		//var_dump(str_replace('"','\\"',$r->getFullUrl()));
-		//exit();
-		$c = $this->phantom.' '.dirname(__FILE__).'/phantom-xss.js "'.str_replace('"','\\"',$r->getFullUrl()).'"';
+		$c = $this->phantom.' '.dirname(__FILE__).'/phantom-xss.js '.base64_encode($r->getFullUrl());
+		$cookies = $r->getCookieTable( true );
+		if( strlen($cookies) ) {
+			$c .= ' '.base64_encode( $cookies ). ' '.base64_encode( Utils::extractDomain($r->getHost()) );
+		}
+		//$c = $this->phantom.' '.dirname(__FILE__).'/phantom-xss.js "'.str_replace('"','\\"',$r->getFullUrl()).'"';
 		//var_dump( $c );
 		
 		ob_start();

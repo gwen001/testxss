@@ -177,7 +177,7 @@ class HttpRequest
 		if( $this->get_params ) {
 			$url .= '?'.$this->implodeGetParams();
 		}
-		if( $this->fragment ) {
+		if( strlen($this->fragment) ) {
 			$url .= '#'.$this->fragment;
 		}
 		if( $this->ssl ) {
@@ -197,7 +197,7 @@ class HttpRequest
 		if( $this->get_params ) {
 			$url .= '?'.$this->implodeGetParams();
 		}
-		if( $this->fragment ) {
+		if( strlen($this->fragment) ) {
 			$url .= '#'.$this->fragment;
 		}
 		if( $this->ssl ) {
@@ -273,9 +273,17 @@ class HttpRequest
 	}
 	
 
-	public function getCookieTable()
+	public function getCookieTable( $string=false )
 	{
-		return $this->cookies;
+		if( $string ) {
+			$t_str = [];
+			foreach( $this->cookies as $k=>$v ) {
+				$t_str[] = $k.'='.$v;
+			}
+			return implode( $t_str, '; ' );
+		} else {
+			return $this->cookies;
+		}
 	}
 	public function getCookie( $key, $base64=false )
 	{
@@ -499,6 +507,17 @@ class HttpRequest
 	}
 	
 	
+	public function getFragment()
+	{
+		return $this->fragment;
+	}
+	public function setFragment( $v )
+	{
+		$this->fragment = trim( $v );
+		return true;
+	}
+	
+	
 	public function request()
 	{
 		$surplace = array();
@@ -518,9 +537,6 @@ class HttpRequest
 		curl_setopt( $c, CURLOPT_PROXY, '127.0.0.1' );
 		curl_setopt( $c, CURLOPT_PROXYPORT, 9050 );
 		curl_setopt( $c, CURLOPT_HTTPPROXYTUNNEL, true );
-		
-		
-		
 		curl_setopt( $c, CURLOPT_CUSTOMREQUEST, $this->method );
 		curl_setopt( $c, CURLOPT_URL, $this->getFullUrl() );
 		curl_setopt( $c, CURLOPT_HTTP_VERSION, $this->http );

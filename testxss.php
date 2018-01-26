@@ -22,7 +22,7 @@ function __autoload( $c ) {
 		'gpg',
 		'h',
 		'help',
-		'inject',
+		'inject:',
 		'inject-name:',
 		'no-test',
 		'no-redir',
