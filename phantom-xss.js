@@ -5,23 +5,41 @@ var args = system.args;
 var page = require('webpage').create();
 page.settings.userAgent = 'Mozilla/5.0 (X11; Linux x86_64; rv:56.0) Gecko/20100101 Firefox/56.0';
 
-if( args.length < 2 || args.length > 4 ) {
-	console.log( 'Usage: phantomjs xss.js <url> [<cookies> <domain>]');
+if( args.length < 3 || args.length > 6 ) {
+	console.log( 'Usage: phantomjs xss.js <method> <url> [<post_params>] [<cookies> <domain>]');
 	phantom.exit();
 }
 
-var url = atob( args[1] );
+var method = atob( args[1] );
+var url = atob( args[2] );
+
+if( args.length > 3 ) {
+	var post = atob( args[3] );
+} else {
+	var post = '';
+}
 
 phantom.clearCookies();
-if( args.length == 4 ) {
-	var domain = atob( args[3] );
-	var cookies = atob( args[2] ).split(';');
+if( args.length >= 5 ) {
+	var cookies = atob( args[4] ).split(';');
+	var domain = atob( args[5] );
 	for( var i=0 ; i<cookies.length ; i++ ) {
 		c = cookies[i].trim().split( '=' );
 		//console.log( c[0]+' -> '+c[1] );
 		phantom.addCookie( {'name':c[0],'value':c[1],'domain':'.'+domain} );
 	}
+} else {
+	var cookies = '';
+	var domain = '';
 }
+
+/*console.log( '========== DEBUG PHANTOM ==========' );
+console.log( 'METHOD= '+method );
+console.log( 'URL= '+url );
+console.log( 'POST= '+post );
+console.log( 'COOKIES= '+cookies );
+console.log( 'DOMAIN= '+domain );*/
+
 
 ////////////////////////////////////////////////////////////////////////////////
 page.onAlert = function() {
@@ -37,12 +55,12 @@ page.onPrompt = function() {
 ////////////////////////////////////////////////////////////////////////////////
 
 
-function run( page, url )
+function run( page, method, url, post )
 {
 	console.log( 'Testing: '+url );
-    page.open( url, function (status) {
-    	//console.log("Status: " + status);
-    	//page.render('a.png');
+    page.open( url, method, post, function (status) {
+    	console.log("Status: " + status);
+    	page.render('poc.png');
     	/*console.log("Status: " + status);
 		var cookies = page.cookies;
 		console.log('Listing cookies:');
@@ -53,7 +71,7 @@ function run( page, url )
 }
 
 
-setTimeout( run(page,url), 0 );
+setTimeout( run(page,method,url,post), 0 );
 
 setTimeout(function() {
 	phantom.exit();

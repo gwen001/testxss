@@ -46,9 +46,9 @@ Options:
 
 # todo
 ```
-POST request with PhantomJS
 Mouse/keyboard events
 Random user-agent
+JSON Padding
 ```
 
 

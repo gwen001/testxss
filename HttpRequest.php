@@ -273,17 +273,9 @@ class HttpRequest
 	}
 	
 
-	public function getCookieTable( $string=false )
+	public function getCookieTable()
 	{
-		if( $string ) {
-			$t_str = [];
-			foreach( $this->cookies as $k=>$v ) {
-				$t_str[] = $k.'='.$v;
-			}
-			return implode( $t_str, '; ' );
-		} else {
-			return $this->cookies;
-		}
+		return $this->cookies;
 	}
 	public function getCookie( $key, $base64=false )
 	{

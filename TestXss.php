@@ -172,7 +172,7 @@ class TestXss
 	 */
 	private $n_child = 0;
 	private $max_child = self::DEFAULT_MAX_CHILD;
-	private $loop_sleep = 100000;
+	private $loop_sleep = 10000;
 	private $t_process = [];
 	private $t_signal_queue = [];
 
@@ -1003,21 +1003,35 @@ class TestXss
 			return;
 		}
 		
-		$c = $this->phantom.' '.dirname(__FILE__).'/phantom-xss.js '.base64_encode($r->getFullUrl());
-		$cookies = $r->getCookieTable( true );
+		$t_args = [];
+		$t_args['METHOD'] = $r->getMethod();
+		$t_args['URL'] = $r->getFullUrl();
+		
+		$t_args['POST'] = strlen($r->getPostParams()) ? $r->getPostParams() : '';
+		
+		$c = $this->phantom.' '.dirname(__FILE__).'/phantom-xss.js';
+		
+		$cookies = $r->getCookies();
 		if( strlen($cookies) ) {
-			$c .= ' '.base64_encode( $cookies ). ' '.base64_encode( Utils::extractDomain($r->getHost()) );
+			$t_args['COOKIES'] = $cookies;
+			$t_args['DOMAIN'] = Utils::extractDomain( $r->getHost() );
+		} else {
+			$t_args['COOKIES'] = $t_args['DOMAIN'] = '';
 		}
-		//$c = $this->phantom.' '.dirname(__FILE__).'/phantom-xss.js "'.str_replace('"','\\"',$r->getFullUrl()).'"';
-		//var_dump( $c );
+		var_dump( $t_args );
+		
+		$c = $this->phantom.' '.dirname(__FILE__).'/phantom-xss.js '.implode( ' ', array_map(function($v){return '"'.trim($v).'"';},$t_args) );
+		echo $c."\n";
+		$c = $this->phantom.' '.dirname(__FILE__).'/phantom-xss.js '.implode( ' ', array_map(function($v){return '"'.base64_encode($v).'"';},$t_args) );
+		echo $c."\n";
+		//exit();
 		
 		ob_start();
-		//$this->phantom_output = Utils::_exec( $c, false );
 		system( $c );
 		$this->phantom_output = ob_get_contents();
 		ob_end_clean();
 		
-		//var_dump( $this->phantom_output );
+		var_dump( $this->phantom_output );
 	}
 	
 	
