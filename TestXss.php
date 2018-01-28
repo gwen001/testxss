@@ -158,14 +158,6 @@ class TestXss
 	private $stop_on_success = false;
 	
 	/**
-	 * results
-	 *
-	 * @var integer
-	 */
-	private $total_injection = 0;
-	private $total_success = 0;
-
-	/**
 	 * daemon stuff
 	 *
 	 * @var mixed
@@ -503,58 +495,81 @@ class TestXss
 			echo "Running ".$this->max_child." threads...\n\n";
 		}
 		
+		$t_sockets = [];
+		$t_vulnerable = [];
+		
 		posix_setsid();
 		declare( ticks=1 );
 		pcntl_signal( SIGCHLD, array($this,'signal_handler') );
 		
-		for( $rindex=0 ; $rindex<$this->n_request ; )
+		for( $pindex=0 ; $pindex<$this->n_payload ; $pindex++ )
 		{
-			if( $this->n_child < $this->max_child )
+			for( $rindex=0 ; $rindex<$this->n_request ; )
 			{
-				$pid = pcntl_fork();
-				
-				if( $pid == -1 ) {
-					// fork error
-				} elseif( $pid ) {
-					// father
-					$this->n_child++;
+				if( $this->stop_on_success && in_array($rindex,$t_vulnerable)!==false ) {
 					$rindex++;
-					$this->t_process[$pid] = uniqid();
-			        if( isset($this->t_signal_queue[$pid]) ){
-			        	$this->signal_handler( SIGCHLD, $pid, $this->t_signal_queue[$pid] );
-			        	unset( $this->t_signal_queue[$pid] );
-			        }
-				} else {
-					// child process
-					usleep( $this->loop_sleep );
-					$this->testRequest( $rindex );
-					exit( 0 );
+					continue;
 				}
-			}
+				
+				if( $this->n_child < $this->max_child )
+				{
+					$t_sockets[] = $s = stream_socket_pair( STREAM_PF_UNIX, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP );
+					stream_set_blocking ( $s[0], false );
+					stream_set_blocking ( $s[1], false );
+					
+					$pid = pcntl_fork();
 
-			usleep( $this->loop_sleep );
+					if( $pid == -1 ) {
+						// fork error
+						//fclose( $sockets[0] );
+						//fclose( $sockets[1] );
+					} elseif( $pid ) {
+						// father
+						$this->n_child++;
+						$rindex++;
+						$this->t_process[$pid] = uniqid();
+				        if( isset($this->t_signal_queue[$pid]) ){
+				        	$this->signal_handler( SIGCHLD, $pid, $this->t_signal_queue[$pid] );
+				        	unset( $this->t_signal_queue[$pid] );
+				        }
+					} else {
+						// child process
+						//fclose( $sockets[1] );
+						usleep( $this->loop_sleep );
+						$xss = $this->testPayload( $rindex, $pindex );
+						if( $xss ) {
+							stream_socket_sendto( $s[0], $rindex );
+						}
+						exit( 0 );
+					}
+				}
+
+				foreach( $t_sockets as $s ) {
+					$msg = stream_socket_recvfrom( $s[1], 32 );
+					if( strlen($msg) ) {
+						$t_vulnerable[] = (int)$msg;
+					}
+				}
+				
+				usleep( 2000000 );
+			}
 		}
 		
 		while( $this->n_child ) {
 			// surely leave the loop please :)
-			sleep( 1 );
+			usleep( 100000 );
 		}
 		
-		
-		if( !$this->no_test ) {
-			//echo $this->n_payload." payload(s) tested on ".$this->injection." of ".$this->n_request." request(s), so ".$this->total_injection." performed and ".$this->total_success." XSS found!\n";
-			echo $this->n_payload." payload(s) tested on ".$this->injection." of ".$this->n_request." request(s)\n";
-		}
-		echo "\n";
-
-		return $this->total_success;
+		return true;
 	}
 
 	
-	private function testRequest( $rindex )
+	private function testPayload( $rindex, $pindex )
 	{
 		ob_start();
-
+		
+		$xss = 0;
+		
 		$reference = $this->t_request[$rindex];
 		$reference->setSsl( $this->ssl );
 		$reference->setRedirect( $this->redirect );
@@ -562,98 +577,73 @@ class TestXss
 		if( $this->cookies ) {
 			$reference->setCookies( $this->cookies );
 		}
-		//var_dump( $reference );
-		//$reference->export();
-		//exit();
 		
-		if( !$this->no_test ) {
-			echo "Request ".($rindex+1)."/".$this->n_request." -> ";
-			Utils::_print( $reference->getFullUrl(), 'light_purple' );
-			echo "\n";
+		// perform tests on FRAGMENT
+		if( strstr($this->injection,'F') && !$this->no_test ) {
+			$xss += $this->testFragment( $reference, $pindex );
 		}
 		
-		for( $pindex=0 ; $pindex<$this->n_payload ; $pindex++ )
+		if( !$xss || !$this->stop_on_success )
 		{
-			$xss = 0;
-			ob_start();
-
-			// perform tests on FRAGMENT
-			if( strstr($this->injection,'F') && !$this->no_test ) {
-				$xss += $this->testFragment( $reference, $pindex );
-			}
-			if( $xss && $this->stop_on_success ) {
-				break;
-			}
-
 			// perform tests on GET parameters
 			if( strstr($this->injection,'G') ) {
 				$xss += $this->testGet( $reference, $pindex );
 			}
-			if( $xss && $this->stop_on_success ) {
-				break;
-			}
 
-			// perform tests on POST parameters
-			if( strstr($this->injection,'P') ) {
-				$xss += $this->testPost( $reference, $pindex );
-			}
-			if( $xss && $this->stop_on_success ) {
-				break;
-			}
-			
-			// perform tests on COOKIES
-			if( strstr($this->injection,'C') && !$this->no_test ) {
-				$xss += $this->testCookies( $reference, $pindex );
-			}
-			if( $xss && $this->stop_on_success ) {
-				break;
-			}
-			
-			// perform tests on HEADERS
-			if( strstr($this->injection,'H') && !$this->no_test ) {
-				$xss += $this->testHeaders( $reference, $pindex );
-			}
-			if( $xss && $this->stop_on_success ) {
-				break;
-			}
-			
-			$display = ob_get_contents();
-			ob_end_clean();
-			
-			if( !$this->no_test ) {
-				if( $this->verbose < 2 || $xss ) {
-					echo str_pad(' ',4)."Payload ".($pindex+1)."/".$this->n_payload." -> injection: ";
-					Utils::_print( $this->t_payload_original[$pindex], 'yellow' );
-					echo " / wish: ";
-					Utils::_print( $this->t_payload_wanted[$pindex], 'yellow' );
-					echo "\n";
+			if( !$xss || !$this->stop_on_success )
+			{
+				// perform tests on POST parameters
+				if( strstr($this->injection,'P') ) {
+					$xss += $this->testPost( $reference, $pindex );
+				}
+				
+				if( !$xss || !$this->stop_on_success )
+				{
+					// perform tests on COOKIES
+					if( strstr($this->injection,'C') && !$this->no_test ) {
+						$xss += $this->testCookies( $reference, $pindex );
+					}
+		
+					if( !$xss || !$this->stop_on_success )
+					{
+						// perform tests on HEADERS
+						if( strstr($this->injection,'H') && !$this->no_test ) {
+							$xss += $this->testHeaders( $reference, $pindex );
+						}
+					}
 				}
 			}
-			
-			echo $display;
-			
-			$this->total_success += $xss;
 		}
 		
-		if( !$this->no_test ) {
-			echo "\n";
-		}
-		
-		$result = ob_get_contents();
+		$display = ob_get_contents();
 		ob_end_clean();
 		
-		echo $result;
+		if( !$this->no_test ) {
+			if( $this->verbose < 2 || $xss ) {
+				echo "Request ".($rindex+1)."/".$this->n_request." -> ";
+				Utils::_print( $reference->getFullUrl(), 'light_purple' );
+				echo "\n";
+
+				echo str_pad(' ',4)."Payload ".($pindex+1)."/".$this->n_payload." -> injection: ";
+				Utils::_print( $this->t_payload_original[$pindex], 'yellow' );
+				echo " / wish: ";
+				Utils::_print( $this->t_payload_wanted[$pindex], 'yellow' );
+				echo "\n";
+			}
+		}
+		
+		echo $display;
+		
+		return $xss;
 	}
 	
-	
+
 	private function testFragment( $reference, $pindex )
 	{
 		// perform tests on FRAGMENT value
 		$xss = 0;
 		$payload = $this->t_payload[$pindex];
 		$pvalue = $reference->getFragment();
-		
-		$this->total_injection++;
 		
 		$r = clone $reference;
 		if( strstr($this->replace_mode,'F') ) {
@@ -691,7 +681,6 @@ class TestXss
 			}
 			
 			// perform tests on GET parameters values
-			$this->total_injection++;
 			$r = clone $reference;
 			if( strstr($this->replace_mode,'G') ) {
 				$new_pvalue = $payload;
@@ -713,7 +702,6 @@ class TestXss
 			
 			// transform GET parameters to POST
 			if( $this->gpg && !$this->no_test ) {
-				$this->total_injection++;
 				$r = clone $reference;
 				if( strstr($this->replace_mode,'G') ) {
 					$new_pvalue = $payload;
@@ -738,7 +726,6 @@ class TestXss
 			// perform tests on GET parameters names
 			if( strstr($this->name_injection,'G') )
 			{
-				$this->total_injection++;
 				$r = clone $reference;
 				$v = $r->getGetParam( $pname );
 				$r->unsetGetParam( $pname );
@@ -757,7 +744,6 @@ class TestXss
 				
 				// transform GET parameters to POST
 				if( $this->gpg && !$this->no_test ) {
-					$this->total_injection++;
 					$r = clone $reference;
 					$v = $r->getGetParam( $pname );
 					$r->unsetGetParam( $pname );
@@ -797,7 +783,6 @@ class TestXss
 
 			// perform tests on POST parameters values
 			if( !$this->no_test ) { // no need to perform those tests if we we only want to display the urls
-				$this->total_injection++;
 				$r = clone $reference;
 				if( strstr($this->replace_mode,'P') ) {
 					$new_pvalue = $payload;
@@ -816,7 +801,6 @@ class TestXss
 
 			// transform POST parameters to GET
 			if( $this->gpg ) {
-				$this->total_injection++;
 				$r = clone $reference;
 				if( strstr($this->replace_mode,'P') ) {
 					$new_pvalue = $payload;
@@ -846,7 +830,6 @@ class TestXss
 			if( strstr($this->name_injection,'P') )
 			{
 				if( !$this->no_test ) { // no need to perform those tests if we we only want to display the urls
-					$this->total_injection++;
 					$r = clone $reference;
 					$v = $r->getPostParam( $pname );
 					$r->unsetPostParam( $pname );
@@ -862,7 +845,6 @@ class TestXss
 				
 				// transform POST parameters to GET
 				if( $this->gpg ) {
-					$this->total_injection++;
 					$r = clone $reference;
 					$v = $r->getPostParam( $pname );
 					$r->unsetPostParam( $pname );
@@ -905,7 +887,6 @@ class TestXss
 			}
 			
 			// perform tests on COOKIES values
-			$this->total_injection++;
 			$r = clone $reference;
 			if( strstr($this->replace_mode,'C') ) {
 				$new_pvalue = $payload;
@@ -924,7 +905,6 @@ class TestXss
 			// perform tests on COOKIES names
 			if( strstr($this->name_injection,'C') )
 			{
-				$this->total_injection++;
 				$r = clone $reference;
 				$v = $r->getCookie( $pname );
 				$r->unsetCookie( $pname );
@@ -957,7 +937,6 @@ class TestXss
 			}
 			
 			// perform tests on HEADERS values
-			$this->total_injection++;
 			$r = clone $reference;
 			if( strstr($this->replace_mode,'H') ) {
 				$r->setHeader( $payload, $pname );
@@ -977,7 +956,6 @@ class TestXss
 			// perform tests on HEADERS names
 			if( strstr($this->name_injection,'H') )
 			{
-				$this->total_injection++;
 				$r = clone $reference;
 				$v = $r->getHeader( $pname );
 				$r->unsetHeader( $pname );
@@ -1018,12 +996,12 @@ class TestXss
 		} else {
 			$t_args['COOKIES'] = $t_args['DOMAIN'] = '';
 		}
-		var_dump( $t_args );
+		//var_dump( $t_args );
 		
 		$c = $this->phantom.' '.dirname(__FILE__).'/phantom-xss.js '.implode( ' ', array_map(function($v){return '"'.trim($v).'"';},$t_args) );
-		echo $c."\n";
+		//echo $c."\n";
 		$c = $this->phantom.' '.dirname(__FILE__).'/phantom-xss.js '.implode( ' ', array_map(function($v){return '"'.base64_encode($v).'"';},$t_args) );
-		echo $c."\n";
+		//echo $c."\n";
 		//exit();
 		
 		ob_start();
@@ -1031,7 +1009,7 @@ class TestXss
 		$this->phantom_output = ob_get_contents();
 		ob_end_clean();
 		
-		var_dump( $this->phantom_output );
+		//var_dump( $this->phantom_output );
 	}
 	
 	

@@ -59,8 +59,8 @@ function run( page, method, url, post )
 {
 	console.log( 'Testing: '+url );
     page.open( url, method, post, function (status) {
-    	console.log("Status: " + status);
-    	page.render('poc.png');
+    	//console.log("Status: " + status);
+    	//page.render('poc.png');
     	/*console.log("Status: " + status);
 		var cookies = page.cookies;
 		console.log('Listing cookies:');
