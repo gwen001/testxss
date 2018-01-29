@@ -58,6 +58,13 @@ class TestXss
 	private $replace_mode = null;
 	
 	/**
+	 * colored output
+	 *
+	 * @var boolean
+	 */
+	private $colored_output = true;
+	
+	/**
 	 * test a specific param/cookie/header
 	 *
 	 * @var string
@@ -204,6 +211,15 @@ class TestXss
 	}
 	public function enableEncode() {
 		$this->encode = true;
+		return true;
+	}
+
+	
+	public function getColoredOutput() {
+		return $this->colored_output;
+	}
+	public function disableColors() {
+		$this->colored_output = false;
 		return true;
 	}
 
@@ -579,7 +595,7 @@ class TestXss
 		}
 		
 		// perform tests on FRAGMENT
-		if( strstr($this->injection,'F') && !$this->no_test ) {
+		if( strstr($this->injection,'F') && !$this->no_test && !$this->specific_param ) {
 			$xss += $this->testFragment( $reference, $pindex );
 		}
 		
@@ -621,13 +637,15 @@ class TestXss
 		if( !$this->no_test ) {
 			if( $this->verbose < 2 || $xss ) {
 				echo "Request ".($rindex+1)."/".$this->n_request." -> ";
-				Utils::_print( $reference->getFullUrl(), 'light_purple' );
+				$this->_print( $reference->getFullUrl(), 'light_purple' );
 				echo "\n";
 
 				echo str_pad(' ',4)."Payload ".($pindex+1)."/".$this->n_payload." -> injection: ";
-				Utils::_print( $this->t_payload_original[$pindex], 'yellow' );
-				echo " / wish: ";
-				Utils::_print( $this->t_payload_wanted[$pindex], 'yellow' );
+				$this->_print( $this->t_payload_original[$pindex], 'yellow' );
+				if( !$this->phantom ) {
+					echo " / wish: ";
+					$this->_print( $this->t_payload_wanted[$pindex], 'yellow' );
+				}
 				echo "\n";
 			}
 		}
@@ -1025,15 +1043,15 @@ class TestXss
 		if( $xss ) {
 			echo str_pad( ' ', 8 );
 			echo $param_type." '".$param_name."' seems to be ";
-			Utils::_print( 'VULNERABLE', 'red' );
+			$this->_print( 'VULNERABLE', 'red' );
 			echo ' with value: ';
-			Utils::_print( $param_value, 'light_cyan' );
-			//Utils::_print( $param_value.$this->t_payload[$pindex], 'light_cyan' );
+			$this->_print( $param_value, 'light_cyan' );
+			//$this->_print( $param_value.$this->t_payload[$pindex], 'light_cyan' );
 			echo "\n";
 		} elseif( $this->verbose < 2 ) {
 			echo str_pad( ' ', 8 );
 			echo $param_type." '".$param_name."' seems to be ";
-			Utils::_print( 'SAFE', 'green' );
+			$this->_print( 'SAFE', 'green' );
 			echo "\n";
 		}
 		/*
@@ -1050,7 +1068,7 @@ class TestXss
 			}
 			$str .= "\n";
 			
-			Utils::_print( $str, 'light_grey' );
+			$this->_print( $str, 'light_grey' );
 		}
 		*/
 		return (int)$xss;
@@ -1092,15 +1110,15 @@ class TestXss
 		if( $xss ) {
 			echo str_pad( ' ', 8 );
 			echo $param_type." '".$param_name."' seems to be ";
-			Utils::_print( 'VULNERABLE', 'red' );
+			$this->_print( 'VULNERABLE', 'red' );
 			echo ' with value: ';
-			Utils::_print( $param_value, 'light_cyan' );
-			//Utils::_print( $param_value.$this->t_payload[$pindex], 'light_cyan' );
+			$this->_print( $param_value, 'light_cyan' );
+			//$this->_print( $param_value.$this->t_payload[$pindex], 'light_cyan' );
 			echo "\n";
 		} elseif( $this->verbose < 2 ) {
 			echo str_pad( ' ', 8 );
 			echo $param_type." '".$param_name."' seems to be ";
-			Utils::_print( 'SAFE', 'green' );
+			$this->_print( 'SAFE', 'green' );
 			echo "\n";
 		}
 		
@@ -1117,7 +1135,7 @@ class TestXss
 			}
 			$str .= "\n";
 			
-			Utils::_print( $str, 'light_grey' );
+			$this->_print( $str, 'light_grey' );
 		}
 
 		return (int)$xss;
@@ -1158,5 +1176,17 @@ class TestXss
 		}
 		
 		return true;
+	}
+	
+	
+	private function _print( $str, $color )
+	{
+		if( $this->colored_output ) {
+			Utils::_print( $str, $color );
+		} else {
+			echo $str;
+		}
+		
+		return;
 	}
 }

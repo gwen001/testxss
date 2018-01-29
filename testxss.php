@@ -24,6 +24,7 @@ function __autoload( $c ) {
 		'help',
 		'inject:',
 		'inject-name:',
+		'no-color',
 		'no-test',
 		'no-redir',
 		'payload:',
@@ -80,12 +81,16 @@ function __autoload( $c ) {
 				$testxss->setNameInjection($v );
 				break;
 
-			case 'no-test':
-				$testxss->noTest();
+			case 'no-color':
+				$testxss->disableColors();
 				break;
 
 			case 'no-redir':
 				$testxss->noRedirect();
+				break;
+
+			case 'no-test':
+				$testxss->noTest();
 				break;
 
 			case 'payload':
