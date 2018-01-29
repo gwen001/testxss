@@ -556,8 +556,8 @@ class TestXss
 
 					if( $pid == -1 ) {
 						// fork error
-						//fclose( $sockets[0] );
-						//fclose( $sockets[1] );
+						@fclose( $sockets[0] );
+						@fclose( $sockets[1] );
 					} elseif( $pid ) {
 						// father
 						$this->n_child++;
@@ -572,17 +572,26 @@ class TestXss
 						//fclose( $sockets[1] );
 						usleep( $this->loop_sleep );
 						$xss = $this->testPayload( $rindex, $pindex );
-						if( $xss ) {
-							stream_socket_sendto( $s[0], $rindex );
-						}
+						stream_socket_sendto( $s[0], $rindex.':'.$xss );
 						exit( 0 );
 					}
 				}
 
-				foreach( $t_sockets as $s ) {
-					$msg = stream_socket_recvfrom( $s[1], 32 );
+				foreach( $t_sockets as $k=>$s )
+				{
+					$msg = trim( stream_socket_recvfrom( $s[1], 32 ) );
+					//var_dump($msg);
+					
 					if( strlen($msg) ) {
-						$t_vulnerable[] = (int)$msg;
+						$tmp = explode( ':', $msg );
+						$i = (int)$tmp[0];
+						$r = (int)$tmp[1];
+						if( $r ) {
+							$t_vulnerable[] = $i;
+						}
+						@fclose( $s[0] );
+						@fclose( $s[1] );
+						unset( $t_sockets[$k] );
 					}
 				}
 				
