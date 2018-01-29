@@ -76,4 +76,4 @@ setTimeout( run(page,method,url,post), 0 );
 
 setTimeout(function() {
 	phantom.exit();
-}, 10000);
+}, 30000);
