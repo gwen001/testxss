@@ -67,6 +67,7 @@ function run( page, method, url, post )
 		for(var i in cookies) {
 			console.log(cookies[i].name + '=' + cookies[i].value);
 		}*/
+		phantom.exit();
 	});
 }
 
@@ -75,4 +76,4 @@ setTimeout( run(page,method,url,post), 0 );
 
 setTimeout(function() {
 	phantom.exit();
-}, 2000);
+}, 10000);
