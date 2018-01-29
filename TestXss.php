@@ -567,7 +567,7 @@ class TestXss
 					}
 				}
 				
-				usleep( $loop_sleep );
+				usleep( $this->loop_sleep );
 			}
 		}
 		
