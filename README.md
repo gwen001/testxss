@@ -11,6 +11,7 @@ Options:
 	--burp		export from Burp Suite (not implement yet)
 	--request	source file of the orignal request
 	--single	load a single url
+	--test		file that contains a list of urls already payloaded (that means payload options will be ignored)
 	--urls		file that contains a list of urls
 	
 	--cookies	set the cookie (overwrite all other cookies)
@@ -18,20 +19,20 @@ Options:
 	--no-redir	do not follow redirection
 	--ssl		force https
 	
-	--test		name of a specific param/cookie/header to test
 	--inject	injection point, default=GPCHFU
 				G: GET parameters
 				P: POST parameters
 				C: Cookies
 				H: Headers
 				F: Fragment
-				U: Url (not implemented yet)
+				U: Url (ending concatenation prepended by a slash '/')
 	--inject-name	inject in paramater name as well, default=disabled
 				G: GET parameters
 				P: POST parameters
 				C: Cookies
 				H: Headers
 	--gpg		try to send GET params to POST and POST params to GET
+	--param		name of a specific param/cookie/header to test
 	
 	--payload	set single payload or file, default='"><
 	--prefix	prefix all payloads with a string, default is random string
@@ -58,7 +59,7 @@ Examples:
 
 # todo
 ```
-Url concatenate
+Url concatenation
 Mouse/keyboard events
 Random user-agent
 JSON Padding

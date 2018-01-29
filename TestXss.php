@@ -8,7 +8,7 @@
 
 class TestXss
 {
-	const DEFAULT_INJECTION = 'GPCHF';
+	const DEFAULT_INJECTION = 'GPCHFU';
 	const DEFAULT_NAME_INJECTION = 'GPCH';
 	const DEFAULT_PAYLOAD = '\'"><';
 	const MAX_CHILD = 50;
@@ -138,6 +138,12 @@ class TestXss
 	private $cookies = null;
 	
 	/**
+	 * inject payload or not
+	 * 
+	 */
+	private $payload_injection = true;
+	
+	/**
 	 * enable phantomjs
 	 * 
 	 */
@@ -220,6 +226,15 @@ class TestXss
 	}
 	public function disableColors() {
 		$this->colored_output = false;
+		return true;
+	}
+
+	
+	public function getPayloadInjection() {
+		return $this->payload_injection;
+	}
+	public function disablePayloadInjection() {
+		$this->payload_injection = false;
 		return true;
 	}
 
@@ -425,41 +440,45 @@ class TestXss
 
 	public function loadPayload()
 	{
-		$uniqid = uniqid();
-		if( is_null($this->payload_prefix) ) {
-			$this->payload_prefix = substr( $uniqid, 0, 6 );
+		if( !$this->payload_injection )
+		{
+			$this->t_payload = [ '' ];
+			$this->t_payload_original = [ '' ];
+			$this->t_payload_wanted = [ '' ];
 		}
-		if( is_null($this->payload_suffix) ) {
-			$this->payload_suffix = substr( $uniqid, -6 );
-		}
-		
-		if( $this->s_payload ) {
-			if( is_file($this->s_payload) ) {
-				echo "Loading payloads from file '".$this->s_payload."'...\n";
-				$this->t_payload = file( $this->s_payload, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES );
-			} else {
-				$this->t_payload = [$this->s_payload];
+		else
+		{
+			$uniqid = uniqid();
+			if( is_null($this->payload_prefix) ) {
+				$this->payload_prefix = substr( $uniqid, 0, 6 );
 			}
-		} else {
-			$this->t_payload = [self::DEFAULT_PAYLOAD];
-		}
-
-		//if( strlen($this->payload_prefix) || strlen($this->payload_suffix) || $this->encode ) {
-			foreach( $this->t_payload as &$p ) {
-				if( $this->encode ) {
-					$p = urlencode( urldecode($p) );
+			if( is_null($this->payload_suffix) ) {
+				$this->payload_suffix = substr( $uniqid, -6 );
+			}
+			
+			if( $this->s_payload ) {
+				if( is_file($this->s_payload) ) {
+					echo "Loading payloads from file '".$this->s_payload."'...\n";
+					$this->t_payload = file( $this->s_payload, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES );
+				} else {
+					$this->t_payload = [$this->s_payload];
 				}
-				$this->t_payload_original[] = $p;
-				$p = $this->payload_prefix . $p . $this->payload_suffix;
-				$this->t_payload_wanted[] = urldecode( $p );
+			} else {
+				$this->t_payload = [self::DEFAULT_PAYLOAD];
 			}
-		//}
+	
+			//if( strlen($this->payload_prefix) || strlen($this->payload_suffix) || $this->encode ) {
+				foreach( $this->t_payload as &$p ) {
+					if( $this->encode ) {
+						$p = urlencode( urldecode($p) );
+					}
+					$this->t_payload_original[] = $p;
+					$p = $this->payload_prefix . $p . $this->payload_suffix;
+					$this->t_payload_wanted[] = urldecode( $p );
+				}
+			//}
+		}
 
-		//var_dump($this->encode);
-		//var_dump($this->t_payload);
-		//var_dump($this->t_payload_original);
-		//var_dump($this->t_payload_wanted);
-		
 		$this->n_payload = count( $this->t_payload );
 		return $this->n_payload;
 	}
@@ -595,36 +614,43 @@ class TestXss
 		}
 		
 		// perform tests on FRAGMENT
-		if( strstr($this->injection,'F') && !$this->no_test && !$this->specific_param ) {
-			$xss += $this->testFragment( $reference, $pindex );
+		if( strstr($this->injection,'U') && !$this->specific_param ) {
+			$xss += $this->testUrl( $reference, $pindex );
 		}
 		
 		if( !$xss || !$this->stop_on_success )
 		{
-			// perform tests on GET parameters
-			if( strstr($this->injection,'G') ) {
-				$xss += $this->testGet( $reference, $pindex );
+			if( strstr($this->injection,'F') && !$this->specific_param ) {
+				$xss += $this->testFragment( $reference, $pindex );
 			}
-
+			
 			if( !$xss || !$this->stop_on_success )
 			{
-				// perform tests on POST parameters
-				if( strstr($this->injection,'P') ) {
-					$xss += $this->testPost( $reference, $pindex );
+				// perform tests on GET parameters
+				if( strstr($this->injection,'G') ) {
+					$xss += $this->testGet( $reference, $pindex );
 				}
-				
+	
 				if( !$xss || !$this->stop_on_success )
 				{
-					// perform tests on COOKIES
-					if( strstr($this->injection,'C') && !$this->no_test ) {
-						$xss += $this->testCookies( $reference, $pindex );
+					// perform tests on POST parameters
+					if( strstr($this->injection,'P') ) {
+						$xss += $this->testPost( $reference, $pindex );
 					}
-		
+					
 					if( !$xss || !$this->stop_on_success )
 					{
-						// perform tests on HEADERS
-						if( strstr($this->injection,'H') && !$this->no_test ) {
-							$xss += $this->testHeaders( $reference, $pindex );
+						// perform tests on COOKIES
+						if( strstr($this->injection,'C') && !$this->no_test ) {
+							$xss += $this->testCookies( $reference, $pindex );
+						}
+			
+						if( !$xss || !$this->stop_on_success )
+						{
+							// perform tests on HEADERS
+							if( strstr($this->injection,'H') && !$this->no_test ) {
+								$xss += $this->testHeaders( $reference, $pindex );
+							}
 						}
 					}
 				}
@@ -656,6 +682,37 @@ class TestXss
 	}
 	
 
+	private function testUrl( $reference, $pindex )
+	{
+		// perform tests on the URL itself
+		// ending concatenation
+		$xss = 0;
+		$payload = $this->t_payload[$pindex];
+		$pvalue = rtrim( $reference->getUrl(), '/' );
+		
+		$r = clone $reference;
+		
+		if( $pvalue == '' ) {
+			$new_pvalue = '/'.$payload;
+		} else {
+			$new_pvalue = $pvalue.'/'.$payload.'/';
+		}
+		
+		$r->setUrl( $new_pvalue );
+		
+		if( $this->no_test ) {
+			echo $r->getFullUrl()."\n";
+		} else {
+			$this->request( $r );
+			$xss += $this->result( $r, 0, '/', $new_pvalue, 'URL' );
+		}
+		
+		unset( $r );
+
+		return $xss;
+	}
+	
+	
 	private function testFragment( $reference, $pindex )
 	{
 		// perform tests on FRAGMENT value

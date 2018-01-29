@@ -156,7 +156,9 @@ class HttpRequest
 	public function setUrl($v) {
 		$this->url = $v;
 		$parse = parse_url( $this->url );
-		$this->url = $parse['path'];
+		if( isset($parse['path']) ) {
+			$this->url = $parse['path'];
+		}
 		//var_dump( $parse );
 		if( isset($parse['query']) ) {
 			$this->get_params = $this->explodeGetParams( $parse['query'] );
@@ -504,6 +506,17 @@ class HttpRequest
 		return $this->fragment;
 	}
 	public function setFragment( $v )
+	{
+		$this->fragment = trim( $v );
+		return true;
+	}
+	
+	
+	public function getPath()
+	{
+		return $this->fragment;
+	}
+	public function setPath( $v )
 	{
 		$this->fragment = trim( $v );
 		return true;

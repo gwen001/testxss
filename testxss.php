@@ -27,6 +27,7 @@ function __autoload( $c ) {
 		'no-color',
 		'no-test',
 		'no-redir',
+		'param:',
 		'payload:',
 		'phantom:',
 		'prefix::',
@@ -93,6 +94,10 @@ function __autoload( $c ) {
 				$testxss->noTest();
 				break;
 
+			case 'param':
+				$testxss->setSpecificParam( $v );
+				break;
+
 			case 'payload':
 				$testxss->setPayload( $v );
 				break;
@@ -129,14 +134,12 @@ function __autoload( $c ) {
 				$testxss->setSuffix( $v );
 				break;
 
-			case 'test':
-				$testxss->setSpecificParam( $v );
-				break;
-
 			case 'threads':
 				$testxss->setMaxChild( $v );
 				break;
 
+			case 'test':
+				$testxss->disablePayloadInjection();
 			case 'urls':
 				$testxss->setSourceFile( $v );
 				break;
