@@ -158,6 +158,8 @@ class HttpRequest
 		$parse = parse_url( $this->url );
 		if( isset($parse['path']) ) {
 			$this->url = $parse['path'];
+		} else {
+			$this->url = '';
 		}
 		//var_dump( $parse );
 		if( isset($parse['query']) ) {

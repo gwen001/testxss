@@ -691,7 +691,12 @@ class TestXss
 		$pvalue = rtrim( $reference->getUrl(), '/' );
 		
 		$r = clone $reference;
-		$new_pvalue = $pvalue.'/'.$payload.'/';
+		if( $pvalue == '' ) {
+			$new_pvalue = '/'.$payload;
+		} else {
+			$new_pvalue = $pvalue.'/'.$payload.'/';
+		}
+		
 		$r->setUrl( $new_pvalue );
 		
 		if( $this->no_test ) {
