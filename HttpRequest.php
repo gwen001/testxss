@@ -171,7 +171,7 @@ class HttpRequest
 		if( isset($parse['host']) ) {
 			$this->host = $parse['host'];
 		}
-		if( isset($parse['host']) ) {
+		if( isset($parse['scheme']) ) {
 			$this->scheme = $parse['scheme'];
 		}
 	}
