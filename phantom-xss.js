@@ -42,15 +42,15 @@ console.log( 'DOMAIN= '+domain );*/
 
 
 ////////////////////////////////////////////////////////////////////////////////
-page.onAlert = function() {
-    console.log('alert() called');
+page.onAlert = function(str) {
+    console.log('alert() called: '+str);
     phantom.exit();
 };
-page.onConfirm = function() {
-    console.log('confirm() called');
+page.onConfirm = function(str) {
+    console.log('confirm() called: '+str);
 };
-page.onPrompt = function() {
-    console.log('prompt() callled');
+page.onPrompt = function(str) {
+    console.log('prompt() callled: '+str);
 };
 ////////////////////////////////////////////////////////////////////////////////
 

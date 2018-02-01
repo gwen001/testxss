@@ -22,5 +22,4 @@ fi
 
 phantom=$(whereis phantomjs | awk '{print $2}')
 
-php testxss.php --threads=10 --urls=$f_src --threads=10 --payload=$f_payloads --prefix --suffix --gpg --phantom=$phantom --sos --verbose=2
-
+php testxss.php --threads=10 --urls=$f_src --payload=$f_payloads --prefix --suffix --gpg --phantom=$phantom --sos --verbose=2

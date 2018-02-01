@@ -10,6 +10,7 @@ class TestXss
 {
 	const DEFAULT_INJECTION = 'GPCHFU';
 	const DEFAULT_NAME_INJECTION = 'GPCH';
+	const DEFAULT_INJECTION_ALERT = '1';
 	const DEFAULT_PAYLOAD = '\'"><';
 	const MAX_CHILD = 50;
 	const DEFAULT_MAX_CHILD = 5;
@@ -622,13 +623,14 @@ class TestXss
 			$reference->setCookies( $this->cookies );
 		}
 		
-		// perform tests on FRAGMENT
+		// perform tests on URL
 		if( strstr($this->injection,'U') && !$this->specific_param ) {
 			$xss += $this->testUrl( $reference, $pindex );
 		}
 		
 		if( !$xss || !$this->stop_on_success )
 		{
+			// perform tests on FRAGMENT
 			if( strstr($this->injection,'F') && !$this->specific_param ) {
 				$xss += $this->testFragment( $reference, $pindex );
 			}
@@ -697,17 +699,17 @@ class TestXss
 		// ending concatenation
 		$xss = 0;
 		$payload = $this->t_payload[$pindex];
-		$pvalue = rtrim( $reference->getUrl(), '/' );
+		$pvalue = $reference->getUrl();
 		
 		$r = clone $reference;
-		$new_pvalue = $pvalue.'/'.$payload.'/';
+		$new_pvalue = rtrim($pvalue,'/').'/'.$payload.'/';
 		$r->setUrl( $new_pvalue );
 		
 		if( $this->no_test ) {
 			echo $r->getFullUrl()."\n";
 		} else {
 			$this->request( $r );
-			$xss += $this->result( $r, 0, '/', $new_pvalue, 'URL' );
+			$xss += $this->result( $r, 0, $pvalue, $new_pvalue, 'URL' );
 		}
 		
 		unset( $r );
@@ -1094,9 +1096,10 @@ class TestXss
 	private function result_phantom( $r, $pindex, $param_name, $param_value, $param_type )
 	{
 		$xss = 0;
-		$m = preg_match( '/\(\) called/', $this->phantom_output );
+		$m = preg_match( '/(.*)\(\) called: (.*)/', $this->phantom_output, $matches );
+		//var_dump( $matches );
 		
-		if( $m ) {
+		if( $m && $matches[2] == self::DEFAULT_INJECTION_ALERT ) {
 			$xss = true;
 		}
 		
