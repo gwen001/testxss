@@ -172,6 +172,14 @@ class TestXss
 	private $stop_on_success = false;
 	
 	/**
+	 * string wished
+	 *
+	 * @var string
+	 */
+	public $wish = null;
+
+
+	/**
 	 * daemon stuff
 	 *
 	 * @var mixed
@@ -204,6 +212,15 @@ class TestXss
 	}
 	public function enableGpg() {
 		$this->gpg = true;
+		return true;
+	}
+
+	
+	public function getWish() {
+		return $this->wish;
+	}
+	public function setWish( $v ) {
+		$this->wish = trim( $v );
 		return true;
 	}
 
@@ -475,7 +492,11 @@ class TestXss
 					}
 					$this->t_payload_original[] = $p;
 					$p = $this->payload_prefix . $p . $this->payload_suffix;
-					$this->t_payload_wanted[] = urldecode( $p );
+					if( !is_null($this->wish) ) {
+						$this->t_payload_wanted[] = $this->wish;
+					} else {
+						$this->t_payload_wanted[] = urldecode( $p );
+					}
 				}
 			//}
 		}
@@ -1147,29 +1168,31 @@ class TestXss
 		$xss = false;
 		$render = '';
 		$rr = $r->getResultBody();
-		//$rr = $r->getResult();
-		//var_dump($rr);
-		//exit();
-		$regexp = '#('.$this->payload_prefix.'(.*?)'.$this->payload_suffix.')#';
-		$m = preg_match_all( $regexp, $rr, $matches );
-		//var_dump( $m );
-		//var_dump( $matches );
-		//var_dump( $this->t_payload_wanted[$pindex] );
 		
-		if( $m ) {
-			foreach( $matches[1] as $m ) {
-				if( $m == $this->t_payload_wanted[$pindex] ) {
-					$xss = true;
+		if( strlen($this->payload_prefix) && strlen($this->payload_suffix) )
+		{
+			$regexp = '#('.$this->payload_prefix.'(.*?)'.$this->payload_suffix.')#';
+			$m = preg_match_all( $regexp, $rr, $matches );
+			
+			if( $m ) {
+				foreach( $matches[1] as $m ) {
+					if( $m == $this->t_payload_wanted[$pindex] ) {
+						$xss = true;
+					}
 				}
+				$render = implode( ', ', $matches[0] );
+			}
+		}
+		else
+		{
+			$regexp = '#('.$this->t_payload_wanted[$pindex].')#';
+			$m = preg_match_all( $regexp, $rr, $matches );
+			if( $m ) {
+				$xss = true;
 			}
 			$render = implode( ', ', $matches[0] );
-			//$xss = true;
 		}
-		/*
-		if( strstr($rr,$this->t_payload_wanted[$pindex]) ) {
-			$xss = true;
-		}
-		*/
+		
 		if( $xss ) {
 			echo str_pad( ' ', 8 );
 			echo $param_type." '".$param_name."' seems to be ";

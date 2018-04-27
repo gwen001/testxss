@@ -39,6 +39,7 @@ Options:
 	--suffix	suffix all payloads with a string, default is random string
 	--encode	urlencode the payload, default=disabled
 	--replace	replace the value of the parameter by the payload instead of concatenate at the end (only for GP)
+	--wish		parse that string we want to find in the response
 
 	--no-test	do not performed any test, list only the urls called
 	--phantom	if you test XSS with phantomjs, full path to the executable

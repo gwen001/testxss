@@ -41,6 +41,7 @@ function __autoload( $c ) {
 		'threads:',
 		'urls:',
 		'verbose:',
+		'wish:',
 	];
 	$t_options = getopt( '', $options );
 	//var_dump( $t_options );
@@ -69,6 +70,10 @@ function __autoload( $c ) {
 				
 			case 'gpg':
 				$testxss->enableGpg();
+				break;
+
+			case 'wish':
+				$testxss->setWish( $v );
 				break;
 
 			case '-h':
