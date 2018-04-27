@@ -528,22 +528,8 @@ class HttpRequest
 	public function request()
 	{
 		$surplace = array();
-		/*
-		echo Utils::_println( $this->getFullUrl(), 'dark_grey' );
-		var_dump($this->method);
-		var_dump($this->http);
-		var_dump($this->cookies);
-		var_dump($this->implodeCookies());
-		var_dump($this->implodePostParams());
-		var_dump($this->getSpecialHeaders());
-		*/
+		
 		$c = curl_init();
-
-		curl_setopt( $c, CURLOPT_PROXYTYPE, CURLPROXY_SOCKS5 );
-		//curl_setopt( $c, CURLOPT_PROXYTYPE, CURLPROXY_HTTP );
-		curl_setopt( $c, CURLOPT_PROXY, '127.0.0.1' );
-		curl_setopt( $c, CURLOPT_PROXYPORT, 9050 );
-		curl_setopt( $c, CURLOPT_HTTPPROXYTUNNEL, true );
 		curl_setopt( $c, CURLOPT_CUSTOMREQUEST, $this->method );
 		curl_setopt( $c, CURLOPT_URL, $this->getFullUrl() );
 		curl_setopt( $c, CURLOPT_HTTP_VERSION, $this->http );

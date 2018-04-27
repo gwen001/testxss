@@ -17,7 +17,7 @@ function __autoload( $c ) {
 	$options = [
 		'burp:',
 		'cookies:',
-		'encode:',
+		'encode',
 		'force-cl:',
 		'gpg',
 		'h',
@@ -47,8 +47,10 @@ function __autoload( $c ) {
 
 	$testxss = new TestXss();
 
-	foreach( $t_options as $k=>$v ) {
-		switch( $k ) {
+	foreach( $t_options as $k=>$v )
+	{
+		switch( $k )
+		{
 			case 'burp':
 				$testxss->setBurpFile( $v );
 				break;
