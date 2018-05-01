@@ -196,6 +196,7 @@ function __autoload( $c ) {
 {
 	echo "\n";
 	$testxss->run();
+	echo "\nThe end.\n";
 }
 // ---
 
