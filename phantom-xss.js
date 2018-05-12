@@ -50,7 +50,7 @@ page.onConfirm = function(str) {
     console.log('confirm() called: '+str);
 };
 page.onPrompt = function(str) {
-    console.log('prompt() callled: '+str);
+    console.log('prompt() called: '+str);
 };
 ////////////////////////////////////////////////////////////////////////////////
 
