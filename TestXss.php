@@ -186,7 +186,7 @@ class TestXss
 	 */
 	private $n_child = 0;
 	private $max_child = self::DEFAULT_MAX_CHILD;
-	private $loop_sleep = 10000;
+	private $loop_sleep = 5000;
 	private $t_process = [];
 	private $t_signal_queue = [];
 
